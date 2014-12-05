@@ -2,6 +2,21 @@
 
 import cmd
 
+class StackReqRsp:
+    """
+    Represents a common input/output object for interacting
+    with different stack creation APIs.
+
+    Can be fed into either a HeatClient based stack create 
+    service or nova/neutron based stack create implementation.
+    """
+
+    def __init__(self):
+        self.networks = []
+        self.vms = []
+        self.routers = []
+        
+
 class CreateStackCmd(cmd.Command):
     """
     This cmd creates a OpenStack Heat Stack instance

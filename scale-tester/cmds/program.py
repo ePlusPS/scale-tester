@@ -18,6 +18,7 @@ class Program(object):
         """
         self.commands = deque()
         self.context = {}
+        self.name = None
 
     def add_command(self,cmd):
         """appends a cmd to the commands list"""
@@ -36,7 +37,7 @@ class ProgramRunner(object):
         self.program = None
         self.completed_commands = deque() 
 
-        self.is_test_mode = True
+        # self.is_test_mode = True
 
     def set_program(self,program):
         self.program = program
@@ -47,12 +48,16 @@ class ProgramRunner(object):
         self.execution_queue.append(cmd)
 
     def run(self):
-
+        LOG.debug("ProgramRunner run started")
         while(True):
             
             if len(self.execution_queue) > 0:
+                LOG.debug("popping next command from the execution queue ")
                 cmd = self.execution_queue.popleft()
-                
+               
+                # wrap each command step in a function so that exception
+                # handling is easier to deal with
+
                 # we can add status checks after each call to check
                 # whether the next step should be invoked or not
                 cmd.init()
@@ -64,14 +69,21 @@ class ProgramRunner(object):
                 
                 self.completed_commands.append(cmd)
 
-                if (self.is_test_mode):
-                    cmd.undo()
-
             elif len(self.program.commands) > 0: 
+                LOG.debug("popping next cmd from the program commands queue ")
                 cmd = self.program.commands.popleft()
                 self.execution_queue.append(cmd)
             else:
-                LOG.debug("no more commands")
+                LOG.debug("No more commands")
                 break
+
+        # Clean up the results of a program/test run
+        while (len(self.completed_commands)>0):
+            executed_cmd = self.completed_commands.popleft()
+            executed_cmd.undo()
+
+
+
+
 
 

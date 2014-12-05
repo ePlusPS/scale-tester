@@ -5,7 +5,9 @@ import tenants
 import logging
 
 LOG = logging.getLogger("scale_tester")
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+formatter = \
+    logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 fh = logging.FileHandler("scale_tester.log")
 fh.setFormatter(formatter)
