@@ -31,20 +31,42 @@ class CreateTenantAndUsers(cmd.Command):
     of tenant users
     """
 
-    def __init__(self, num_of_users, context):
+    def __init__(self, tenant_name, num_of_users, cmd_context, program):
         """
         constructor
         """
         super(cmd.Command,self).__init__()
-        self.name = "CreateTenantAndUsers"
+        self.name = __name__ 
+        self.program = program
+
+        self.tenant_name = tenant_name
         self.num_users = num_of_users
-        self.context = context
+        self.context = cmd_context
 
     def init(self):
-        LOG.debug("init")
+        LOG.debug("init - %s ", self.__class__.__name__)
+
 
     def execute(self):
         LOG.debug("execute")
+        
+        LOG.debug(self.program.context)
+
+        keystone_c = \
+        keystone_client.Client(username=self.program.context['openstack_user'],
+                               password=self.program.context['openstack_password'],
+                               tenant_name='admin',
+                               auth_url=self.program.context['openstack_auth_url'])
+        
+        tenant = keystone_c.tenants.create(tenant_name=self.tenant_name,
+                                  description='scale test created',
+                                  enabled = True)
+
+        # LOG.debug("Created Tenant : ", tenant)
+        LOG.debug(keystone_c.tenants.list())
+        
+        keystone_c.tenants.delete(tenant)
+        
 
     def done(self):
         LOG.debug("done")

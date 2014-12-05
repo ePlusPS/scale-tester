@@ -4,9 +4,10 @@ class Command(object):
     This class represents an abstract Command
     """
     
-    def __init__(self,name=None):
+    def __init__(self,name=None, program=None):
         self.context = {}
         self.name = name
+        self.program = program 
 
     def init(self):
         """
