@@ -49,8 +49,15 @@ class ProgramRunner(object):
             
             if len(self.execution_queue) > 0:
                 cmd = self.execution_queue.popleft()
-
+                
+                # we can add status checks after each call to check
+                # whether the next step should be invoked or not
+                cmd.init()
                 cmd.execute()
+
+                # if a cmd.done() indicates that it's not done, appendleft
+                # the current cmd
+                cmd.done()
             elif len(self.program.commands) > 0: 
                 cmd = self.program.commands.popleft()
                 self.execution_queue.append(cmd)

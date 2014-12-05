@@ -1,4 +1,9 @@
+import logging
 import cmd
+import keystoneclient.v2_0.client as keystone_client
+import keystoneclient.v2_0.tenants as keystone_tenants
+
+LOG = logging.getLogger("scale_tester")
 
 class CreateTenantsCmd(cmd.Command):
 
@@ -36,13 +41,13 @@ class CreateTenantAndUsers(cmd.Command):
         self.context = context
 
     def init(self):
-        print("init")
+        LOG.debug("init")
 
     def execute(self):
-        print("execute")
+        LOG.debug("execute")
 
     def done(self):
-        print("done")
+        LOG.debug("done")
 
 class CreateTenantCmd(cmd.Command):
     """
