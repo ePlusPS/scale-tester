@@ -34,6 +34,8 @@ class ProgramRunner(object):
         """
         self.execution_queue= deque()
         self.program = None
+        self.completed_commands = deque() 
+
         self.is_test_mode = True
 
     def set_program(self,program):
@@ -60,6 +62,8 @@ class ProgramRunner(object):
                 # the current cmd
                 cmd.done()
                 
+                self.completed_commands.append(cmd)
+
                 if (self.is_test_mode):
                     cmd.undo()
 

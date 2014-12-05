@@ -60,13 +60,14 @@ class CreateTenantAndUsers(cmd.Command):
 
         keystone_c = \
         keystone_client.Client(username=self.program.context['openstack_user'],
-                               password=self.program.context['openstack_password'],
-                               tenant_name='admin',
-                               auth_url=self.program.context['openstack_auth_url'])
+                           password=self.program.context['openstack_password'],
+                           tenant_name='admin',
+                           auth_url=self.program.context['openstack_auth_url'])
         
-        self.created_tenant = keystone_c.tenants.create(tenant_name=self.tenant_name,
-                                  description='scale test created',
-                                  enabled = True)
+        self.created_tenant = \
+                        keystone_c.tenants.create(tenant_name=self.tenant_name,
+                        description='scale test created',
+                        enabled = True)
 
         # LOG.debug("Created Tenant : ", tenant)
 
@@ -77,11 +78,12 @@ class CreateTenantAndUsers(cmd.Command):
 
             LOG.debug("creating tenant user %s" % (new_user_name))
 
-            self.created_users.append(keystone_c.users.create(name=new_user_name,
-                                                              password=new_user_name,
-                                                              email=None,
-                                                              tenant_id=self.created_tenant.id,
-                                                              enabled=True))
+            self.created_users.append(
+                keystone_c.users.create(name=new_user_name,
+                                        password=new_user_name,
+                                        email=None,
+                                        tenant_id=self.created_tenant.id,
+                                        enabled=True))
 
               
 
@@ -98,9 +100,9 @@ class CreateTenantAndUsers(cmd.Command):
         # should just access some singleton for keystone
         keystone_c = \
         keystone_client.Client(username=self.program.context['openstack_user'],
-                               password=self.program.context['openstack_password'],
-                               tenant_name='admin',
-                               auth_url=self.program.context['openstack_auth_url']) 
+                           password=self.program.context['openstack_password'],
+                           tenant_name='admin',
+                           auth_url=self.program.context['openstack_auth_url']) 
 
         if (self.created_tenant is not None):
             keystone_c.tenants.delete(self.created_tenant)
