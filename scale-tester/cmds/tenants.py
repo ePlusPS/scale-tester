@@ -45,9 +45,12 @@ class CreateTenantAndUsers(cmd.Command):
         self.context = cmd_context
 
         self.created_tenant = None
+        self.created_users = []
 
     def init(self):
         LOG.debug("init - %s ", self.__class__.__name__)
+        # any precondition logic that should prevent the command from being 
+        # executed should be coded here
 
 
     def execute(self):
@@ -68,8 +71,19 @@ class CreateTenantAndUsers(cmd.Command):
         # LOG.debug("Created Tenant : ", tenant)
 
         LOG.debug(pprint.pformat(keystone_c.tenants.list()))
-        
-        
+
+        for i in xrange(0,self.num_users):
+            new_user_name = "%s-%d" % (self.tenant_name,i)
+
+            LOG.debug("creating tenant user %s" % (new_user_name))
+
+            self.created_users.append(keystone_c.users.create(name=new_user_name,
+                                                              password=new_user_name,
+                                                              email=None,
+                                                              tenant_id=self.created_tenant.id,
+                                                              enabled=True))
+
+              
 
     def done(self):
         LOG.debug("done")
@@ -90,6 +104,11 @@ class CreateTenantAndUsers(cmd.Command):
 
         if (self.created_tenant is not None):
             keystone_c.tenants.delete(self.created_tenant)
+
+        for user in self.created_users:
+            LOG.debug("deleting %s",str(user))
+            keystone_c.users.delete(user)
+
 
 
 class CreateTenantCmd(cmd.Command):
