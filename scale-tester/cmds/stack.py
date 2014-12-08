@@ -11,11 +11,30 @@ class StackReqRsp:
     service or nova/neutron based stack create implementation.
     """
 
-    def __init__(self):
+    def __init__(self,**kwargs):
         self.networks = []
         self.vms = []
         self.routers = []
-        
+
+class CreateStacksCmd(cmd.Command):
+    """
+    This cmd creates invidual CreateStackCmd 
+    commands based on the number of tenants
+    """
+    
+    def __init__(self):
+        pass
+
+    def init(self):
+        pass
+
+    def execute(self):
+        # walk the number of tenants
+        #  figure out how many networks
+        pass
+
+    def undo(self):
+        pass
 
 class CreateStackCmd(cmd.Command):
     """

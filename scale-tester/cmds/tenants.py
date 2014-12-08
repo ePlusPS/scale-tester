@@ -3,6 +3,7 @@ import cmd
 import keystoneclient.v2_0.client as keystone_client
 import keystoneclient.v2_0.tenants as keystone_tenants
 import pprint
+import pudb
 
 LOG = logging.getLogger("scale_tester")
 
@@ -57,6 +58,9 @@ class CreateTenantAndUsers(cmd.Command):
         LOG.debug("execute")
         
         LOG.debug(pprint.pformat(self.program.context))
+        
+        # obtain handle to program context/program resources
+        program_resources = self.program.context["program.resources"]
 
         keystone_c = \
         keystone_client.Client(username=self.program.context['openstack_user'],
@@ -68,8 +72,9 @@ class CreateTenantAndUsers(cmd.Command):
                         keystone_c.tenants.create(tenant_name=self.tenant_name,
                         description='scale test created',
                         enabled = True)
+        
 
-        # LOG.debug("Created Tenant : ", tenant)
+        program_resources.add_tenant(self.created_tenant)
 
         LOG.debug(pprint.pformat(keystone_c.tenants.list()))
 
@@ -78,14 +83,17 @@ class CreateTenantAndUsers(cmd.Command):
 
             LOG.debug("creating tenant user %s" % (new_user_name))
 
-            self.created_users.append(
-                keystone_c.users.create(name=new_user_name,
+            created_user = keystone_c.users.create(name=new_user_name,
                                         password=new_user_name,
                                         email=None,
                                         tenant_id=self.created_tenant.id,
-                                        enabled=True))
+                                        enabled=True)
 
-              
+            program_resources.add_user(created_user)
+
+            self.created_users.append(created_user)
+
+        pu.db      
 
     def done(self):
         LOG.debug("done")

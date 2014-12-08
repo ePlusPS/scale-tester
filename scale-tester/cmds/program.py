@@ -3,10 +3,59 @@ from collections import deque
 
 LOG = logging.getLogger("scale_tester")
 
+class Resources:
+    """
+    This class encapsulates the data structures used for storing program
+    created resources such as tenants, users, networks, etc
+    """
+
+    def __init__(self):
+        """
+        constructor.  resource objects are keyed by their uuids
+        """
+        self.tenants = {}
+        self.users = {}
+
+    def add_tenant(self,tenant):
+        """
+        Register a created tenant
+        
+        """
+        if(tenant is not None):
+            self.tenants[tenant.id] = tenant
+    
+    def get_tenant(self,tenant_id):
+        """
+        Getter for retrieving a particular tenant (based on its unique id)
+        """
+        if tenant_id in self.tenants:
+            return self.tenants[tenant_id]
+
+    def add_user(self,user):
+        """
+        register a newly created user (based on its unique id)
+        The user object is expected to be of the same type as created /
+        returned by the keystone api
+        """
+        
+        if (user is not None):
+            self.users[user.id] = user
+    
+    def get_user(self,user_id):
+        """
+        Getter for retrieving a particular user (based on its unique id)
+        """
+        if (user_id in self.users):
+            return self.users[user_id]
+
 class Program(object):
     """
     This class represents a collection of parsed commands to be executed by the
     programm runner
+
+    Preallocated context keys
+
+    program.resources -> Resources object
     """
 
     def __init__(self):
@@ -19,6 +68,9 @@ class Program(object):
         self.commands = deque()
         self.context = {}
         self.name = None
+        
+        resources = Resources()
+        self.context["program.resources"] = resources
 
     def add_command(self,cmd):
         """appends a cmd to the commands list"""
