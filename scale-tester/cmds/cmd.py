@@ -1,5 +1,6 @@
 
 import keystoneclient.v2_0.client as keystone_client
+import logging
 
 # Return codes for commands
 SUCCESS = 0
@@ -11,6 +12,7 @@ FAILURE_HALT = 2
 # Command failed, but continue onto the next cmd
 FAILURE_CONTINUE = 3
 
+LOG = logging.getLogger("scale_tester")
 
 def get_keystone_client(program):
     """
@@ -21,8 +23,9 @@ def get_keystone_client(program):
       keystone_client.Client(username=program.context['openstack_user'],
                              password=program.context['openstack_password'],
                              tenant_name=program.context['openstack_project'],
-                             auth_url=self.program.context['openstack_auth_url'])
-
+                             auth_url=program.context['openstack_auth_url'])
+    
+    LOG.debug("obtained keystone client")
     return keystone_c
 
 

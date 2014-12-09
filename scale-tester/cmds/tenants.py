@@ -71,13 +71,9 @@ class CreateTenantAndUsers(cmd.Command):
         
         # obtain handle to program context/program resources
         program_resources = self.program.context["program.resources"]
-
-        keystone_c = \
-        keystone_client.Client(username=self.program.context['openstack_user'],
-                           password=self.program.context['openstack_password'],
-                           tenant_name=self.program.context['openstack_project'],
-                           auth_url=self.program.context['openstack_auth_url'])
         
+        keystone_c = cmd.get_keystone_client(self.program)
+
         self.created_tenant = \
                         keystone_c.tenants.create(tenant_name=self.tenant_name,
                         description='scale test created',
