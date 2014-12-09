@@ -63,10 +63,9 @@ class CreateTenantAndUsers(cmd.Command):
         When this command is executed, if successful, it will modify the
         program's context.  Specifically the Resources object keyed at 
         "program.resources".
-
         """
+
         LOG.debug("execute")
-        
         LOG.debug(pprint.pformat(self.program.context))
         
         # obtain handle to program context/program resources
@@ -85,16 +84,14 @@ class CreateTenantAndUsers(cmd.Command):
         for i in xrange(0,self.num_users):
             new_user_name = "%s-%d" % (self.tenant_name,i)
 
-            LOG.debug("creating tenant user %s" % (new_user_name))
-
             created_user = keystone_c.users.create(name=new_user_name,
                                         password=new_user_name,
                                         email=None,
                                         tenant_id=self.created_tenant.id,
                                         enabled=True)
-
+            # what about the user role?
+            LOG.debug("created tenant user %s" % (new_user_name))
             program_resources.add_user(created_user)
-
             self.created_users.append(created_user)
 
         return cmd.SUCCESS
@@ -112,10 +109,7 @@ class CreateTenantAndUsers(cmd.Command):
         
         # should just access some singleton for keystone
         keystone_c = \
-        keystone_client.Client(username=self.program.context['openstack_user'],
-                           password=self.program.context['openstack_password'],
-                           tenant_name='admin',
-                           auth_url=self.program.context['openstack_auth_url']) 
+            cmd.get_keystone_client(self.program)
 
         if (self.created_tenant is not None):
             keystone_c.tenants.delete(self.created_tenant)

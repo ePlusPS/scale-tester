@@ -19,6 +19,9 @@ def get_keystone_client(program):
     Using the program context, connect and obtain the
     keystone client/token
     """
+
+    # ideally, the actual creation of the keystone client should only 
+    # done once.
     keystone_c = \
       keystone_client.Client(username=program.context['openstack_user'],
                              password=program.context['openstack_password'],
@@ -26,6 +29,22 @@ def get_keystone_client(program):
                              auth_url=program.context['openstack_auth_url'])
     
     LOG.debug("obtained keystone client")
+    return keystone_c
+
+
+def get_keystone_client_for_tenant_user(tenant_name, user_name, password, auth_url):
+    """
+    Using generalized credentials, obtain a keystone client
+    """
+    keystone_c = \
+        keystone_client.Client(username=user_name,
+                             password=password,
+                             tenant_name=tenant_name,
+                             auth_url=auth_url)
+    
+    LOG.debug("obtained keystone client for tenant %s, user %s" % 
+             (tenant_name, user_name))
+
     return keystone_c
 
 
