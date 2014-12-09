@@ -8,7 +8,10 @@ import pudb
 LOG = logging.getLogger("scale_tester")
 
 class CreateTenantsCmd(cmd.Command):
-
+    """
+    This command is responsible for inspecting the scale test input parameters
+    and generating the subsequent CreateTenantAndUsers command
+    """
     def __init__(self):
         """
         constructor
@@ -52,9 +55,16 @@ class CreateTenantAndUsers(cmd.Command):
         LOG.debug("init - %s ", self.__class__.__name__)
         # any precondition logic that should prevent the command from being 
         # executed should be coded here
+        return cmd.SUCCESS
 
 
     def execute(self):
+        """
+        When this command is executed, if successful, it will modify the
+        program's context.  Specifically the Resources object keyed at 
+        "program.resources".
+
+        """
         LOG.debug("execute")
         
         LOG.debug(pprint.pformat(self.program.context))
@@ -65,7 +75,7 @@ class CreateTenantAndUsers(cmd.Command):
         keystone_c = \
         keystone_client.Client(username=self.program.context['openstack_user'],
                            password=self.program.context['openstack_password'],
-                           tenant_name='admin',
+                           tenant_name=self.program.context['openstack_project'],
                            auth_url=self.program.context['openstack_auth_url'])
         
         self.created_tenant = \
@@ -75,8 +85,6 @@ class CreateTenantAndUsers(cmd.Command):
         
 
         program_resources.add_tenant(self.created_tenant)
-
-        LOG.debug(pprint.pformat(keystone_c.tenants.list()))
 
         for i in xrange(0,self.num_users):
             new_user_name = "%s-%d" % (self.tenant_name,i)
@@ -93,10 +101,11 @@ class CreateTenantAndUsers(cmd.Command):
 
             self.created_users.append(created_user)
 
-        pu.db      
+        return cmd.SUCCESS
 
     def done(self):
         LOG.debug("done")
+        return cmd.SUCCESS
 
     def undo(self):
         """
@@ -118,6 +127,8 @@ class CreateTenantAndUsers(cmd.Command):
         for user in self.created_users:
             LOG.debug("deleting %s",str(user))
             keystone_c.users.delete(user)
+
+        return cmd.SUCCESS
 
 
 

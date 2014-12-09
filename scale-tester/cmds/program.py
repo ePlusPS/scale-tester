@@ -1,4 +1,5 @@
 import logging
+import pprint
 from collections import deque
 
 LOG = logging.getLogger("scale_tester")
@@ -23,6 +24,7 @@ class Resources:
         """
         if(tenant is not None):
             self.tenants[tenant.id] = tenant
+            LOG.debug(pprint.pformat(tenant))
     
     def get_tenant(self,tenant_id):
         """
@@ -40,6 +42,7 @@ class Resources:
         
         if (user is not None):
             self.users[user.id] = user
+            LOG.debug(pprint.pformat(user))
     
     def get_user(self,user_id):
         """
@@ -55,7 +58,8 @@ class Program(object):
 
     Preallocated context keys
 
-    program.resources -> Resources object
+    "program.resources" -> Resources object
+    
     """
 
     def __init__(self):
@@ -69,6 +73,7 @@ class Program(object):
         self.context = {}
         self.name = None
         
+        # tracks created openstack resource objects
         resources = Resources()
         self.context["program.resources"] = resources
 

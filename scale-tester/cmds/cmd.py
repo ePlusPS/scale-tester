@@ -1,4 +1,31 @@
 
+import keystoneclient.v2_0.client as keystone_client
+
+# Return codes for commands
+SUCCESS = 0
+
+# Cmd failed, halt the program
+FAILURE = 1
+# Command failed, stop further command execution
+FAILURE_HALT = 2
+# Command failed, but continue onto the next cmd
+FAILURE_CONTINUE = 3
+
+
+def get_keystone_client(program):
+    """
+    Using the program context, connect and obtain the
+    keystone client/token
+    """
+    keystone_c = \
+      keystone_client.Client(username=program.context['openstack_user'],
+                             password=program.context['openstack_password'],
+                             tenant_name=program.context['openstack_project'],
+                             auth_url=self.program.context['openstack_auth_url'])
+
+    return keystone_c
+
+
 class Command(object):
     """
     This class represents an abstract Command

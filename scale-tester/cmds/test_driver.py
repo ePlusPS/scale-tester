@@ -22,6 +22,7 @@ def main():
    
     # change this for your local environment
     program_context['openstack_user']='admin'
+    program_context['openstack_project']='admin'
     program_context['openstack_password']='c48d4870d911442c'
     program_context['openstack_auth_url']='http://10.1.10.127:5000/v2.0/'
 
