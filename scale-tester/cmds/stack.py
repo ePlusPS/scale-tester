@@ -5,6 +5,7 @@ import pprint
 import logging
 import heatclient.v1.client as heat_client
 import heatclient.openstack.common.uuidutils as uuidutils
+import yaml
 
 LOG = logging.getLogger("scale_tester")
 
@@ -20,11 +21,11 @@ class StackReqRsp:
     def __init__(self):
         self.stack_name = ""
         # input key-value pairs for the template
-        self.input_keys = {}
+        self.input = {}
         # output key-value pairs for the template output parameters
-        self.output_keys = {}
+        self.output = {}
     
-    def generate_heat_create_req(self):
+    def generate_heat_create_req(self,stack_name):
         """
         Returns a dictionary compliant with the kwargs keys
         for heat.stacks.create()
@@ -34,12 +35,16 @@ class StackReqRsp:
         params['environment'] = {}
         params['files']={}
         params['parameters']= {'image_id': \
-                                'adc34d8b-d752-4873-8873-0f2563ee8c72',
-                               'public_net': 'EXT-NET'
+                                self.input['image_id'],
+                               'public_net': self.input['public_net']
                               }
 
-        params['stack_name']="nh-stack-8"
-        params['template'] = ""
+        params['stack_name']=stack_name
+
+        heat_template_stream = open(self.input['heat_hot_file'])
+        heat_template = yaml.load(heat_template_stream)
+
+        params['template'] = heat_template 
 
         return params
 
@@ -101,6 +106,7 @@ class CreateStackCmd(cmd.Command):
                                   auth_url=\
                                   self.program.context["openstack_auth_url"])
 
+        # assumming that we're using heat
         heat_url = self.program.context['openstack_heat_url']
         heat_url = heat_url % (keystone_c.auth_tenant_id)
         
@@ -112,7 +118,14 @@ class CreateStackCmd(cmd.Command):
         LOG.debug("obtained heat client")
         self.stack_uuid = uuidutils.generate_uuid()
         LOG.debug("proposed stack uuid = %s" % (self.stack_uuid))
-        # stackReqRsp = StackReqRsp()
+
+        stackReqRsp = StackReqRsp()
+        stackReqRsp.input['image_id']=self.context['vm_image_id']
+        stackReqRsp.input['public_net']=self.context['external_network']
+        stackReqRsp.input['heat_hot_file']=self.context['heat_hot_file']
+        heat_req = stackReqRsp.generate_heat_create_req(self.stack_name)
+        LOG.debug("heat request dictionary generated")
+        LOG.debug(pprint.pformat(heat_req))
 
         return cmd.SUCCESS
 

@@ -27,7 +27,7 @@ def main():
     program_context['openstack_password']='c48d4870d911442c'
     program_context['openstack_auth_url']='http://10.1.10.127:5000/v2.0/'
     program_context['openstack_heat_url']='http://10.10.127:8004/v1/%s'
-    program_context['heat_hot_file_path']='./nh.yml'
+    program_context['heat_hot_file_path']='nh.yaml'
 
     cmd_context = {}
 
@@ -42,7 +42,7 @@ def main():
 
     createStackContext['vm_image_id']='adc34d8b-d752-4873-8873-0f2563ee8c72'
     createStackContext['external_network']='EXT-NET'
-    createStackContext['heat_hot_file']="./nh.yml"
+    createStackContext['heat_hot_file']="nh.yaml"
 
     createStackCmd = \
         stack.CreateStackCmd("stack-1",
