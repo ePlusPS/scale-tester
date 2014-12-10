@@ -75,7 +75,7 @@ class PingTestCommand(cmd.Command):
         cmd_str = "ping -c %s %s" % (count, dst_ip)
         print("running command: %s" % (cmd_str))
 
-        sin, sout, serr = chan.exec_command(cmd_str)
+        sin, sout, serr = ssh.exec_command(cmd_str)
         #chan.send(cmd_str)
         #output_str = chan.recv(2048)
         rc = sout.channel.recv_exit_status()
@@ -87,6 +87,14 @@ class PingTestCommand(cmd.Command):
 
         #chan.close()
         ssh.close()
+
+
+def main():
+    ping_tester = PingTestCommand(None)
+    ping_tester._trigger_ping("7.1.1.46", "7.1.1.1")
+    
+if __name__ == "__main__":
+    main()
         
         
 
