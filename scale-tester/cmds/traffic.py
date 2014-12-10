@@ -68,18 +68,25 @@ class PingTestCommand(cmd.Command):
                     username="cirros",
                     password="cubswin:)")
 
-        chan = ssh.get_transport().open_session()
-        chan.get_pty()
-        chan.invoke_shell()
+        #chan = ssh.get_transport().open_session()
+        #chan.get_pty()
+        #chan.invoke_shell()
         
         cmd_str = "ping -c %s %s" % (count, dst_ip)
-        
-        #chan.exec_command(cmd_str)
-        chan.send(cmd_str)
-        output_str = chan.recv(2048)
+        print("running command: %s" % (cmd_str))
 
-        print("ping output: %s" % output_str)
-        chan.close()
+        sin, sout, serr = chan.exec_command(cmd_str)
+        #chan.send(cmd_str)
+        #output_str = chan.recv(2048)
+        rc = sout.channel.recv_exit_status()
+
+        print("ping rc: %s" % rc)
+        print("ping output:\n")
+        for line in sout.readlines():
+            print("  %s" % line)
+
+        #chan.close()
+        ssh.close()
         
         
 
