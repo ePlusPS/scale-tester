@@ -16,10 +16,31 @@ class StackReqRsp:
     service or nova/neutron based stack create implementation.
     """
 
-    def __init__(self,**kwargs):
-        self.networks = []
-        self.vms = []
-        self.routers = []
+    def __init__(self):
+        self.stack_name = ""
+        # input key-value pairs for the template
+        self.input_keys = {}
+        # output key-value pairs for the template output parameters
+        self.output_keys = {}
+    
+    def generate_heat_create_req(self):
+        """
+        Returns a dictionary compliant with the kwargs keys
+        for heat.stacks.create()
+        """
+        params = {}
+        params['disable_rollback'] = False
+        params['environment'] = {}
+        params['files']={}
+        params['parameters']= {'image_id': \
+                                'adc34d8b-d752-4873-8873-0f2563ee8c72',
+                               'public_net': 'EXT-NET'
+                              }
+
+        params['stack_name']="nh-stack-8"
+        params['template'] = ""
+
+        return params
 
 class CreateStacksCmd(cmd.Command):
     """
@@ -46,9 +67,13 @@ class CreateStackCmd(cmd.Command):
     This cmd creates a OpenStack Heat Stack instance
     """
     
-    def __init__(self, tenant_name, user_name, program):
-        self.tenant_name = tenant
+    def __init__(self, stack_name, tenant_name, user_name, cmd_context, program):
+        super(cmd.Command,self).__init__()
+        self.stack_name = stack_name
+        self.tenant_name = tenant_name
         self.user_name   = user_name
+
+        self.context = cmd_context
         self.program = program
 
     def init(self):
@@ -66,21 +91,20 @@ class CreateStackCmd(cmd.Command):
                                   auth_url=\
                                   self.program.context["openstack_auth_url"])
 
-        heat_url = self.program.context['openstack_heat_url'] %
-            (keystone_c.auth_tenant_id)
+        heat_url = self.program.context['openstack_heat_url']
+        heat_url = heat_url % (keystone_c.auth_tenant_id)
         
         LOG.debug("heat_url = %s" % (heat_url)) 
         
         heat_c = heat_client.Client(heat_url,
                                     token=keystone_c.auth_token)
 
-
+        LOG.debug("obtained heat client")
         self.stack_uuid = uuidutils.generate_uuid()
-
         LOG.debug("proposed stack uuid = %s" % (self.stack_uuid))
-
+        # stackReqRsp = StackReqRsp()
 
         return cmd.SUCCESS
 
     def undo(self):
-        pass
+        return cmd.SUCCESS
