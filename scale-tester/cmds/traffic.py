@@ -87,6 +87,14 @@ class PingTestCommand(cmd.Command):
 
         #chan.close()
         ssh.close()
+
+
+def main():
+    ping_tester = PingTestCommand(None)
+    ping_tester._trigger_ping("7.1.1.46", "7.1.1.1")
+    
+if __name__ == "__main__":
+    main()
         
         
 
