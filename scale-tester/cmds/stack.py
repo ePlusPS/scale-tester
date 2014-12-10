@@ -1,6 +1,7 @@
 # placeholder for heatclient related with commands
 
 import cmd
+import pprint
 import logging
 import heatclient.v1.client as heat_client
 import heatclient.openstack.common.uuidutils as uuidutils
@@ -77,8 +78,17 @@ class CreateStackCmd(cmd.Command):
         self.program = program
 
     def init(self):
-        # precondition, tenant and user exist
-        return cmd.SUCCESS
+        # precondition, tenant and user exists
+        # check that hot file key exists
+        if ('heat_hot_file' in self.context and
+            'vm_image_id' in self.context and
+            'external_network' in self.context):
+            LOG.debug("init-precondition met for CreateStackCmd")
+            return cmd.SUCCESS
+        else:
+            LOG.debug("init-precondition failed for CreateStackCmd")
+            LOG.debug(pprint.pformat(self.context))
+            return cmd.FAILURE_CONTINUE 
 
     def execute(self):
         """

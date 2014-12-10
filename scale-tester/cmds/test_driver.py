@@ -45,7 +45,11 @@ def main():
     createStackContext['heat_hot_file']="./nh.yml"
 
     createStackCmd = \
-        stack.CreateStackCmd("stack-1","tenant-test","tenant-test-0",createStackContext,test_program)
+        stack.CreateStackCmd("stack-1",
+                             "tenant-test",
+                             "tenant-test-0",
+                             createStackContext,
+                             test_program)
     
     test_program.add_command(createTenantsAndUsersCmd)
     test_program.add_command(createStackCmd)
