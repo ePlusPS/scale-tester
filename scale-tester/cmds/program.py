@@ -16,6 +16,7 @@ class Resources:
         """
         self.tenants = {}
         self.users = {}
+        self.tenant_users = {}
 
     def add_tenant(self,tenant):
         """
@@ -25,6 +26,10 @@ class Resources:
         if(tenant is not None):
             self.tenants[tenant.id] = tenant
             LOG.debug(pprint.pformat(tenant))
+            
+            # create initial placeholder for mapping tenant users to a
+            # tenant_id
+            self.tenant_users[tenant.id] = []
     
     def get_tenant(self,tenant_id):
         """
@@ -43,13 +48,26 @@ class Resources:
         if (user is not None):
             self.users[user.id] = user
             LOG.debug(pprint.pformat(user))
-    
+            
+            # associate user with tenant mapping
+            if (user.tenantId in self.tenant_users):
+                tenant_users = self.tenant_users[user.tenantId]
+                tenant_users.append(user)
+
+            pu.db 
+
     def get_user(self,user_id):
         """
         Getter for retrieving a particular user (based on its unique id)
         """
         if (user_id in self.users):
             return self.users[user_id]
+    
+    def get_tenant_users(self, tenant_id):
+        """
+        A generator for iterating through all the users for a tenant
+        """
+        pass
 
 class Program(object):
     """

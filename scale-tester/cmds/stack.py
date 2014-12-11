@@ -6,6 +6,7 @@ import logging
 import heatclient.v1.client as heat_client
 import heatclient.openstack.common.uuidutils as uuidutils
 import yaml
+import pudb
 
 LOG = logging.getLogger("scale_tester")
 
@@ -23,7 +24,7 @@ class StackReqRsp:
         # input key-value pairs for the template
         self.input = {}
         # output key-value pairs for the template output parameters
-        self.output = {}
+        self.output = [] 
     
     def generate_heat_create_req(self,stack_name):
         """
@@ -42,9 +43,19 @@ class StackReqRsp:
         params['stack_name']=stack_name
 
         heat_template_stream = open(self.input['heat_hot_file'])
-        heat_template = yaml.load(heat_template_stream)
+        heat_template_dict = yaml.load(heat_template_stream)
 
-        params['template'] = heat_template 
+        params['template'] = heat_template_dict 
+
+        # parse heat_template dictionary and note down output params
+        if ('outputs' in heat_template_dict):
+            output_dict = heat_template_dict['outputs']
+
+            for key in output_dict:
+                self.output.append(key)
+
+            LOG.debug("output params parsed from heat template")
+            LOG.debug(pprint.pformat(self.output))
 
         return params
 
@@ -54,19 +65,67 @@ class CreateStacksCmd(cmd.Command):
     commands based on the number of tenants
     """
     
-    def __init__(self):
-        pass
+    def __init__(self, cmd_context, program):
+        super(cmd.Command,self).__init__()
+        self.context = cmd_context
+        self.program = program
 
     def init(self):
-        pass
+        #if ("program.resources" in self.program.context):
+        #    return cmd.SUCCESS
+        #else:
+        #    return cmd.FAILURE_HALT
+        
+        # make sure that self.program.context['program_runner'] exists
+        return cmd.SUCCESS
 
     def execute(self):
         # walk the number of tenants
-        #  figure out how many networks
-        pass
+        resources = self.program.context['program.resources']
+        LOG.debug("Walking resources") 
+        if (resources is not None):
+            for tenant_id in resources.tenants:
+                LOG.debug(pprint.pformat(resources.tenants[tenant_id]))
+                tenant = resources.tenants[tenant_id]
+
+                if (tenant_id in resources.tenant_users and \
+                    len(resources.tenant_users[tenant_id]) > 0):
+
+                    LOG.debug(pprint.pformat(resources.tenant_users[tenant_id][0]))
+                    a_user = resources.tenant_users[tenant_id][0]
+                    
+                    # create child commands for creating individual stacks
+                    create_stack_cmd_obj = \
+                        create_stack_cmd(tenant,a_user,self.program)
+
+                    program_runner = self.program.context['program_runner']
+                    program_runner.execution_queue.append(create_stack_cmd_obj)
+                    msg = "enqueued CreateStackCmd for tenant:%s, user:%s in \
+                           program_runner execution_queue" % \
+                           (tenant.name,a_user.name)
+                    LOG.debug(msg)
+
+        return cmd.SUCCESS
 
     def undo(self):
-        pass
+        return cmd.SUCCESS
+
+def create_stack_cmd(tenant, user, program):
+    stack_name = "stack-" + tenant.name
+    cmd_context = {}
+
+    cmd_context['vm_image_id']='adc34d8b-d752-4873-8873-0f2563ee8c72'
+    cmd_context['external_network']='EXT-NET'
+    cmd_context['heat_hot_file']="nh.yaml"
+
+    create_stack_cmd_obj = CreateStackCmd(stack_name,
+                                          tenant.name,
+                                          user.name,
+                                          cmd_context,
+                                          program)
+
+    return create_stack_cmd_obj
+    
 
 class CreateStackCmd(cmd.Command):
     """
@@ -81,6 +140,7 @@ class CreateStackCmd(cmd.Command):
 
         self.context = cmd_context
         self.program = program
+
 
     def init(self):
         # precondition, tenant and user exists
@@ -123,9 +183,18 @@ class CreateStackCmd(cmd.Command):
         stackReqRsp.input['image_id']=self.context['vm_image_id']
         stackReqRsp.input['public_net']=self.context['external_network']
         stackReqRsp.input['heat_hot_file']=self.context['heat_hot_file']
+
         heat_req = stackReqRsp.generate_heat_create_req(self.stack_name)
         LOG.debug("heat request dictionary generated")
         LOG.debug(pprint.pformat(heat_req))
+
+        """
+        resp = heat_c.stacks.create(**heat_req)
+       
+        # process out-parameters and update Resource tracking dictionaries
+
+        """
+
 
         return cmd.SUCCESS
 
