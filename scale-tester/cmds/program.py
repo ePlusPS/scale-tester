@@ -90,6 +90,7 @@ def parse_program(test_configuration):
 
 
     program = Program()
+    program.context = program_context
 
     for command_dict in commands:
         cmd_name = command_dict['command_name']
@@ -111,9 +112,7 @@ def parse_program(test_configuration):
 
         obj = class_obj(cmd_context, program)
 
-
-         
-
+        program.add_command(obj)
         
 
 class Program(object):
