@@ -12,23 +12,25 @@ class CreateTenantsCmd(cmd.Command):
     This command is responsible for inspecting the scale test input parameters
     and generating the subsequent CreateTenantAndUsers command
     """
-    def __init__(self):
+    def __init__(self,cmd_context, program):
         """
         constructor
         """
         super(cmd.Command,self).__init__()
+        self.context = cmd_context
+        self.program = program
     
     def init(self):
-        print("init") 
+        LOG.debug("init") 
     
     def execute(self):
-        print("execute")
+        LOG.debug("execute")
     
     def done(self):
-        print("done")
+        LOG.debug("done")
     
     def undo(self):
-        print("undo")
+        LOG.debug("undo")
 
 class CreateTenantAndUsers(cmd.Command):
     """
@@ -36,17 +38,18 @@ class CreateTenantAndUsers(cmd.Command):
     of tenant users
     """
 
-    def __init__(self, tenant_name, num_of_users, cmd_context, program):
+    def __init__(self, cmd_context, program, **kwargs):
         """
         constructor
+        kwargs: 'tenant_name', 'num_of_users'
         """
         super(cmd.Command,self).__init__()
         self.name = __name__ 
+        self.context = cmd_context
         self.program = program
 
-        self.tenant_name = tenant_name
-        self.num_users = num_of_users
-        self.context = cmd_context
+        self.tenant_name = kwargs['tenant_name']
+        self.num_users = kwargs['num_of_users']
 
         self.created_tenant = None
         self.created_users = []

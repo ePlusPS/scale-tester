@@ -33,10 +33,10 @@ def main():
     cmd_context = {}
 
     createTenantsAndUsersCmd = \
-        tenants.CreateTenantAndUsers(tenant_name="tenant-test",
-                                     num_of_users=3,
-                                     cmd_context=cmd_context,
-                                     program=test_program)
+        tenants.CreateTenantAndUsers(cmd_context=cmd_context,
+                                     program=test_program,
+                                     tenant_name="tenant-test",
+                                     num_of_users=3)
     
 
     create_stacks_context = {}

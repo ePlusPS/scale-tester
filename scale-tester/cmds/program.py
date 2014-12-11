@@ -1,8 +1,11 @@
 import logging
 import pprint
+import re
 from collections import deque
 import tenants
 import stack
+import importlib
+
 LOG = logging.getLogger("scale_tester")
 
 class Resources:
@@ -74,6 +77,9 @@ def parse_program(test_configuration):
     parses it, and creates the corresponding program instance.
     """
     LOG.debug(pprint.pformat(test_configuration))
+    
+    module_class_regex = "(?P<module_path>.*)\.(?P<class_name>.*Cmd)"
+    
 
     program_context = test_configuration['program']['context']
     LOG.debug("program context")
@@ -82,13 +88,31 @@ def parse_program(test_configuration):
     commands = test_configuration['program']['commands']
     LOG.debug("program commands")
 
+
+    program = Program()
+
     for command_dict in commands:
         cmd_name = command_dict['command_name']
-        cmd_context = command_dict['context']
         LOG.debug(cmd_name)
+        
+        match_results = re.match(module_class_regex, cmd_name)
+
+        LOG.debug("module_path=%s" % (match_results.group('module_path')))
+        LOG.debug("class name = %s " % (match_results.group('class_name')))
+        
+        # module = __import__(match_results.group('module_path'))
+        module = importlib.import_module(match_results.group('module_path'))
+        class_obj = getattr(module,match_results.group('class_name'))
+
+        # LOG.debug("class object name = %s" % (class_obj.__name__))
+        
+        cmd_context = command_dict['context']
         LOG.debug(pprint.pformat(cmd_context))
 
-        cmd_obj = eval(cmd_name)
+        obj = class_obj(cmd_context, program)
+
+
+         
 
         
 
