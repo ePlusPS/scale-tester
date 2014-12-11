@@ -1,0 +1,35 @@
+{
+    "program" : {
+        "context" : {
+            "openstack_conf" : {
+                "openstack_project":"admin",
+                "openstack_user":"admin",
+                "openstack_password":"c48d4870d911442c",
+                "openstack_auth_url":"http://10.1.10.127:5000/v2.0/",
+                "openstack_heat_url":"http://10.10.127:8004/v1/%s"
+            },
+            "global_test_parameters" : {
+                "num_of_tenants" : 250,
+                "num_users_per_tenant": 1,
+                "num_networks_per_tenat" : 3,
+                "num_vms_per_network" : 3,
+                "ext_net":"10.1.10.0/24",
+                "ext_net_gw":"10.1.10.1"
+            }
+        },
+        "commands" : [
+            {
+                "command_name" : "CreateTenantsCmd",
+                "context" : {}
+            },
+            {
+                "command_name" : "CreateStacksCmd",
+                "context" : {
+                    "vm_image_id" : "adc34d8b-d752-4873-8873-0f2563ee8c72",
+                    "external_network" : "EXT-NET",
+                    "heat_hot_file":"nh.yaml"
+                }
+            }
+        ]
+    }
+}

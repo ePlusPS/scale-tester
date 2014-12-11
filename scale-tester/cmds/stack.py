@@ -117,6 +117,11 @@ class CreateStacksCmd(cmd.Command):
 def create_stack_cmd(tenant, user, parent_cmd_context, program):
     """
     Factory function for instantiating CreateStackCmd objects
+
+    Assumes that parent_cmd_context has the following keys set
+    * vm_image_id
+    * external_network
+    * heat_hot_file
     """
     stack_name = "stack-" + tenant.name
     cmd_context = {}
@@ -138,6 +143,11 @@ def create_stack_cmd(tenant, user, parent_cmd_context, program):
 class CreateStackCmd(cmd.Command):
     """
     This cmd creates a OpenStack Heat Stack instance
+    
+    Notable context keys
+       'vm_image_id'
+       'external_network'
+       'heat_hot_file'
     """
     
     def __init__(self, stack_name, tenant_name, user_name, cmd_context, program):
