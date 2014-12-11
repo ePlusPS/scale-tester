@@ -61,8 +61,8 @@ class StackReqRsp:
 
 class CreateStacksCmd(cmd.Command):
     """
-    This cmd creates invidual CreateStackCmd 
-    commands based on the number of tenants
+    This is a factory cmd that walks resource data structures (tenants and
+    users) and creates invidual CreateStackCmd for each tenant. 
     """
     
     def __init__(self, cmd_context, program):
@@ -80,7 +80,11 @@ class CreateStacksCmd(cmd.Command):
         return cmd.SUCCESS
 
     def execute(self):
-        # walk the number of tenants
+        """
+        This method walks the program resources object.  For each
+        tenant, create and enqueue (in the program_runner) a CreateStackCmd
+        object.
+        """
         resources = self.program.context['program.resources']
         LOG.debug("Walking resources") 
         if (resources is not None):
@@ -111,9 +115,13 @@ class CreateStacksCmd(cmd.Command):
         return cmd.SUCCESS
 
 def create_stack_cmd(tenant, user, program):
+    """
+    Factory function for instantiating CreateStackCmd objects
+    """
     stack_name = "stack-" + tenant.name
     cmd_context = {}
-
+    
+    # this should be parametrized
     cmd_context['vm_image_id']='adc34d8b-d752-4873-8873-0f2563ee8c72'
     cmd_context['external_network']='EXT-NET'
     cmd_context['heat_hot_file']="nh.yaml"
@@ -133,6 +141,9 @@ class CreateStackCmd(cmd.Command):
     """
     
     def __init__(self, stack_name, tenant_name, user_name, cmd_context, program):
+        """
+        constructor
+        """
         super(cmd.Command,self).__init__()
         self.stack_name = stack_name
         self.tenant_name = tenant_name
@@ -199,4 +210,7 @@ class CreateStackCmd(cmd.Command):
         return cmd.SUCCESS
 
     def undo(self):
+        """
+        When invoked, will delete the stack created by this command
+        """
         return cmd.SUCCESS

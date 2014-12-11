@@ -45,23 +45,8 @@ def main():
         stack.CreateStacksCmd(create_stacks_context,test_program)
 
 
-    """ 
-    createStackContext = {}
-
-    createStackContext['vm_image_id']='adc34d8b-d752-4873-8873-0f2563ee8c72'
-    createStackContext['external_network']='EXT-NET'
-    createStackContext['heat_hot_file']="nh.yaml"
-
-    createStackCmd = \
-        stack.CreateStackCmd("stack-1",
-                             "tenant-test",
-                             "tenant-test-0",
-                             createStackContext,
-                             test_program)
-    """  
     test_program.add_command(createTenantsAndUsersCmd)
     test_program.add_command(createStacksCmd)
-    # test_program.add_command(createStackCmd)
 
     # pu.db
     program_runner.set_program(test_program)

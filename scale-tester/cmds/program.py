@@ -54,8 +54,6 @@ class Resources:
                 tenant_users = self.tenant_users[user.tenantId]
                 tenant_users.append(user)
 
-            pu.db 
-
     def get_user(self,user_id):
         """
         Getter for retrieving a particular user (based on its unique id)
