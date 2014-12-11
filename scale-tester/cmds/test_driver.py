@@ -40,6 +40,11 @@ def main():
     
 
     create_stacks_context = {}
+    
+    create_stacks_context['vm_image_id']='adc34d8b-d752-4873-8873-0f2563ee8c72'
+    create_stacks_context['external_network']='EXT-NET'
+    create_stacks_context['heat_hot_file']="nh.yaml"
+
 
     createStacksCmd = \
         stack.CreateStacksCmd(create_stacks_context,test_program)

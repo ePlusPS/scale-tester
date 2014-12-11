@@ -100,7 +100,7 @@ class CreateStacksCmd(cmd.Command):
                     
                     # create child commands for creating individual stacks
                     create_stack_cmd_obj = \
-                        create_stack_cmd(tenant,a_user,self.program)
+                        create_stack_cmd(tenant,a_user, self.context,self.program)
 
                     program_runner = self.program.context['program_runner']
                     program_runner.execution_queue.append(create_stack_cmd_obj)
@@ -114,7 +114,7 @@ class CreateStacksCmd(cmd.Command):
     def undo(self):
         return cmd.SUCCESS
 
-def create_stack_cmd(tenant, user, program):
+def create_stack_cmd(tenant, user, parent_cmd_context, program):
     """
     Factory function for instantiating CreateStackCmd objects
     """
@@ -122,9 +122,9 @@ def create_stack_cmd(tenant, user, program):
     cmd_context = {}
     
     # this should be parametrized
-    cmd_context['vm_image_id']='adc34d8b-d752-4873-8873-0f2563ee8c72'
-    cmd_context['external_network']='EXT-NET'
-    cmd_context['heat_hot_file']="nh.yaml"
+    cmd_context['vm_image_id']      = parent_cmd_context['vm_image_id']
+    cmd_context['external_network'] = parent_cmd_context['external_network']
+    cmd_context['heat_hot_file']    = parent_cmd_context['heat_hot_file']
 
     create_stack_cmd_obj = CreateStackCmd(stack_name,
                                           tenant.name,
