@@ -12,6 +12,7 @@ import json
 import logging
 import pudb
 import pprint
+import cmds.program as scale_tester_program
 
 DESCRIPTION="Scale Tester"
 EPILOG = "Copyright 2014 OneCloud, Inc.  All rights reserved."
@@ -39,7 +40,10 @@ def parse_args():
 
 
 def process_test_input_file(program_args):
-    
+    """
+    This function returns a dictionary form of the json
+    test configuration file.
+    """
     test_input_file = program_args.test_input_file
 
     input_file_stream = open(test_input_file)
@@ -56,6 +60,8 @@ def main():
     print(parsed_args.test_input_file)
 
     test_configuration = process_test_input_file(parsed_args)
+
+    program = scale_tester_program.parse_program(test_configuration)
 
 
 if __name__ == "__main__":

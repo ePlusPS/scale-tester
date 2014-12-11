@@ -1,7 +1,8 @@
 import logging
 import pprint
 from collections import deque
-
+import tenants
+import stack
 LOG = logging.getLogger("scale_tester")
 
 class Resources:
@@ -66,6 +67,30 @@ class Resources:
         A generator for iterating through all the users for a tenant
         """
         pass
+
+def parse_program(test_configuration):
+    """
+    This function accepts the dictionary form of a json test program,
+    parses it, and creates the corresponding program instance.
+    """
+    LOG.debug(pprint.pformat(test_configuration))
+
+    program_context = test_configuration['program']['context']
+    LOG.debug("program context")
+    LOG.debug(pprint.pformat(program_context))
+
+    commands = test_configuration['program']['commands']
+    LOG.debug("program commands")
+
+    for command_dict in commands:
+        cmd_name = command_dict['command_name']
+        cmd_context = command_dict['context']
+        LOG.debug(cmd_name)
+        LOG.debug(pprint.pformat(cmd_context))
+
+        cmd_obj = eval(cmd_name)
+
+        
 
 class Program(object):
     """
