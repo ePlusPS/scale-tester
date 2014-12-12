@@ -62,7 +62,6 @@ def main():
     test_configuration = process_test_input_file(parsed_args)
     program = cmd_program.parse_program(test_configuration)
 
-    pu.db
     program_runner = cmd_program.ProgramRunner()
 
     program_runner.set_program(program)
