@@ -1,0 +1,97 @@
+#########################################################################
+#      Author: Darshan Kumar Chickmagalur                               #
+#      Date:   20/11/2014                                               #
+#      Company:OneCloudInc.com                                          #
+#########################################################################
+heat_template_version: !!str 2013-05-23
+
+description: HOT template for one network with one VM 
+
+parameters:
+  image_id:
+    type: string
+    description: Image Name
+
+  public_net:
+    type: string
+    description: public network name
+  
+  public_net_id:
+    type: string
+    description: public network id
+ 
+resources:
+    sample_net_1:
+        type: OS::Neutron::Net
+        properties:
+            name: nh_net_1
+
+    sample_subnet_1:
+        type: OS::Neutron::Subnet
+        properties:
+            network_id: { get_resource: sample_net_1 }
+            cidr: 13.13.13.0/24
+            gateway_ip: 13.13.13.1
+
+    router1:
+        type: OS::Neutron::Router
+        properties:
+            external_gateway_info:
+                network: { get_param: public_net }
+     
+    router1_interface:
+        type: OS::Neutron::RouterInterface
+        properties:
+            router_id: { get_resource: router1 }
+            subnet_id: { get_resource: sample_subnet_1 }
+
+    server1_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_1 }
+ 
+    server1:
+        type: OS::Nova::Server
+        properties:
+            name: Server1
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: server1_port }
+
+    floating_ip1:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: server1_port }
+    
+    server2_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_1 }
+ 
+    server2:
+        type: OS::Nova::Server
+        properties:
+            name: Server2
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: server2_port }
+
+    floating_ip2:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: server2_port }
+
+    
+outputs:
+    server1_private_ip:
+        description: Private IP address of server1
+        value: { get_attr: [ server1, first_address ] }
+    server2_private_ip:
+        description: Private IP address of server2
+        value: { get_attr: [ server2, first_address ] }
+
+
