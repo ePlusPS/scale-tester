@@ -12,7 +12,7 @@ import json
 import logging
 import pudb
 import pprint
-import cmds.program as scale_tester_program
+import cmds.program as cmd_program
 
 DESCRIPTION="Scale Tester"
 EPILOG = "Copyright 2014 OneCloud, Inc.  All rights reserved."
@@ -60,9 +60,15 @@ def main():
     print(parsed_args.test_input_file)
 
     test_configuration = process_test_input_file(parsed_args)
+    program = cmd_program.parse_program(test_configuration)
 
-    program = scale_tester_program.parse_program(test_configuration)
+    pu.db
+    program_runner = cmd_program.ProgramRunner()
 
+    program_runner.set_program(program)
+    program_runner.run()
+
+    LOG.debug("finished")
 
 if __name__ == "__main__":
     main()

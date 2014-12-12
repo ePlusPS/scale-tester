@@ -1,11 +1,14 @@
 import logging
 import cmd
+import program
 import keystoneclient.v2_0.client as keystone_client
 import keystoneclient.v2_0.tenants as keystone_tenants
 import pprint
 import pudb
 
 LOG = logging.getLogger("scale_tester")
+
+Test_Tenant_Prefix = "test-tenant-%d"
 
 class CreateTenantsCmd(cmd.Command):
     """
@@ -21,15 +24,56 @@ class CreateTenantsCmd(cmd.Command):
         self.program = program
     
     def init(self):
+        """
+        check that the preconditions are met
+        """
+        # obtain program context
         LOG.debug("init") 
+
+        global_test_params = self.program.context["global_test_parameters"]
+
+        if ("num_of_tenants" in global_test_params and
+            "num_users_per_tenant" in global_test_params and
+            "program_runner" in self.program.context):
+            return cmd.SUCCESS
+        else:
+            return cmd.FAILURE
     
     def execute(self):
-        LOG.debug("execute")
-    
+        # create the resource tracker
+        if ("program.resources" not in self.program.context):
+            resources = program.Resources()
+            self.program.context['program.resources'] = resources
+
+        global_test_params = self.program.context["global_test_parameters"]
+
+        num_tenants = global_test_params['num_of_tenants']
+        num_users_per_tenant = global_test_params['num_users_per_tenant']
+
+        LOG.debug("execute, num_tenants=%d, num_users_per_tenant=%d" % \
+                  (num_tenants, num_users_per_tenant))
+        
+
+        for x in xrange(0,num_tenants):
+            """
+            create tenant commands
+            Each tenant will be named "Test_Tenant_Prefix + index"
+            """
+            cmd_context = {}
+            tenant_name = Test_Tenant_Prefix % (x)
+            createTenantAndUsersCmd = CreateTenantAndUsers(cmd_context,
+                                                           program,
+                                                           tenant_name=tenant_name,
+                                                           num_users=num_users_per_tenant)
+            
+            
     def done(self):
         LOG.debug("done")
     
     def undo(self):
+        """
+        Actual work is performed in child CreateTenantAndUsers cmd
+        """
         LOG.debug("undo")
 
 class CreateTenantAndUsers(cmd.Command):
@@ -41,7 +85,7 @@ class CreateTenantAndUsers(cmd.Command):
     def __init__(self, cmd_context, program, **kwargs):
         """
         constructor
-        kwargs: 'tenant_name', 'num_of_users'
+        kwargs: 'tenant_name', 'num_users'
         """
         super(cmd.Command,self).__init__()
         self.name = __name__ 
@@ -49,16 +93,22 @@ class CreateTenantAndUsers(cmd.Command):
         self.program = program
 
         self.tenant_name = kwargs['tenant_name']
-        self.num_users = kwargs['num_of_users']
+        self.num_users = kwargs['num_users']
 
         self.created_tenant = None
         self.created_users = []
 
     def init(self):
         LOG.debug("init - %s ", self.__class__.__name__)
+
+
+
         # any precondition logic that should prevent the command from being 
         # executed should be coded here
-        return cmd.SUCCESS
+        if ("program.resources" in self.program.context): 
+            return cmd.SUCCESS
+        else:
+            return cmd.FAILURE
 
 
     def execute(self):
@@ -122,49 +172,3 @@ class CreateTenantAndUsers(cmd.Command):
             keystone_c.users.delete(user)
 
         return cmd.SUCCESS
-
-
-
-class CreateTenantCmd(cmd.Command):
-    """
-    This class represents the logic to create a single OpenStack tenant
-    """
-    def __init__(self):
-        """
-        constructor
-        """
-        super(cmd.Command,self).__init__()
-    
-    def init(self):
-        print("init") 
-    
-    def execute(self):
-        print("execute")
-    
-    def done(self):
-        print("done")
-    
-    def undo(self):
-        print("undo")
-
-class CreateUserCmd(cmd.Command):
-    """
-    This class represents the logic to create a single OpenStack User
-    """
-    def __init__(self):
-        """
-        constructor
-        """
-        super(cmd.Command,self).__init__()
-    
-    def init(self):
-        print("init") 
-    
-    def execute(self):
-        print("execute")
-    
-    def done(self):
-        print("done")
-    
-    def undo(self):
-        print("undo")

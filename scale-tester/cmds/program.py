@@ -101,7 +101,6 @@ def parse_program(test_configuration):
         LOG.debug("module_path=%s" % (match_results.group('module_path')))
         LOG.debug("class name = %s " % (match_results.group('class_name')))
         
-        # module = __import__(match_results.group('module_path'))
         module = importlib.import_module(match_results.group('module_path'))
         class_obj = getattr(module,match_results.group('class_name'))
 
@@ -114,6 +113,7 @@ def parse_program(test_configuration):
 
         program.add_command(obj)
         
+    return program
 
 class Program(object):
     """
@@ -161,7 +161,15 @@ class ProgramRunner(object):
         # self.is_test_mode = True
 
     def set_program(self,program):
+        """
+        Associates a program with the ProgramRunner.
+
+        enqueue the first program command into the execution queue
+        """
         self.program = program
+        
+        # make sure the program has a reference back to the program runner
+        self.program.context['program_runner'] = self
         
         # pop the first command from the program
         cmd = self.program.commands.popleft()

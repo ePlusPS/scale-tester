@@ -71,10 +71,10 @@ class CreateStacksCmd(cmd.Command):
         self.program = program
 
     def init(self):
-        #if ("program.resources" in self.program.context):
-        #    return cmd.SUCCESS
-        #else:
-        #    return cmd.FAILURE_HALT
+        if ("program.resources" in self.program.context):
+            return cmd.SUCCESS
+        else:
+            return cmd.FAILURE_HALT
         
         # make sure that self.program.context['program_runner'] exists
         return cmd.SUCCESS
@@ -131,11 +131,11 @@ def create_stack_cmd(tenant, user, parent_cmd_context, program):
     cmd_context['external_network'] = parent_cmd_context['external_network']
     cmd_context['heat_hot_file']    = parent_cmd_context['heat_hot_file']
 
-    create_stack_cmd_obj = CreateStackCmd(stack_name,
-                                          tenant.name,
-                                          user.name,
-                                          cmd_context,
-                                          program)
+    create_stack_cmd_obj = CreateStackCmd(cmd_context,
+                                          program,
+                                          stack_name=stack_name,
+                                          tenant_name=tenant.name,
+                                          user_name=user.name)
 
     return create_stack_cmd_obj
     
@@ -150,31 +150,33 @@ class CreateStackCmd(cmd.Command):
        'heat_hot_file'
     """
     
-    def __init__(self, stack_name, tenant_name, user_name, cmd_context, program):
+    def __init__(self, cmd_context, program, **kwargs):
         """
         constructor
+        kwargs - 'stack_name', 'tenant_name', 'user_name'
+                 'vm_image_id'
+                 'external_network'
+                 'heat_hot_file'
         """
         super(cmd.Command,self).__init__()
-        self.stack_name = stack_name
-        self.tenant_name = tenant_name
-        self.user_name   = user_name
-
         self.context = cmd_context
         self.program = program
+        
+        self.stack_name = kwargs['stack_name']
+        self.tenant_name = kwargs['tenant_name']
+        self.user_name   = kwargs['user_name']
+        self.vm_image_id = kwargs['vm_image_id']
+        self.external_network = kwargs['external_network']
+        self.heat_hot_file = kwargs['heat_hot_file']
+
 
 
     def init(self):
         # precondition, tenant and user exists
         # check that hot file key exists
-        if ('heat_hot_file' in self.context and
-            'vm_image_id' in self.context and
-            'external_network' in self.context):
-            LOG.debug("init-precondition met for CreateStackCmd")
-            return cmd.SUCCESS
-        else:
-            LOG.debug("init-precondition failed for CreateStackCmd")
-            LOG.debug(pprint.pformat(self.context))
-            return cmd.FAILURE_CONTINUE 
+        LOG.debug("init")
+        LOG.debug(pprint.pformat(self.context))
+        return cmd.SUCCESS
 
     def execute(self):
         """
@@ -201,9 +203,9 @@ class CreateStackCmd(cmd.Command):
         LOG.debug("proposed stack uuid = %s" % (self.stack_uuid))
 
         stackReqRsp = StackReqRsp()
-        stackReqRsp.input['image_id']=self.context['vm_image_id']
-        stackReqRsp.input['public_net']=self.context['external_network']
-        stackReqRsp.input['heat_hot_file']=self.context['heat_hot_file']
+        stackReqRsp.input['image_id']=self.vm_image_id
+        stackReqRsp.input['public_net']=self.external_network
+        stackReqRsp.input['heat_hot_file']=self.heat_hot_file
 
         heat_req = stackReqRsp.generate_heat_create_req(self.stack_name)
         LOG.debug("heat request dictionary generated")
