@@ -22,11 +22,14 @@ def get_keystone_client(program):
 
     # ideally, the actual creation of the keystone client should only 
     # done once.
+    
+    openstack_conf = program.context["openstack_conf"]
+
     keystone_c = \
-      keystone_client.Client(username=program.context['openstack_user'],
-                             password=program.context['openstack_password'],
-                             tenant_name=program.context['openstack_project'],
-                             auth_url=program.context['openstack_auth_url'])
+      keystone_client.Client(username=openstack_conf['openstack_user'],
+                             password=openstack_conf['openstack_password'],
+                             tenant_name=openstack_conf['openstack_project'],
+                             auth_url=openstack_conf['openstack_auth_url'])
     
     LOG.debug("obtained keystone client")
     return keystone_c

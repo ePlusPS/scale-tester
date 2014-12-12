@@ -63,7 +63,6 @@ def main():
     program = cmd_program.parse_program(test_configuration)
 
     program_runner = cmd_program.ProgramRunner()
-
     program_runner.set_program(program)
     program_runner.run()
 

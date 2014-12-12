@@ -53,6 +53,7 @@ class CreateTenantsCmd(cmd.Command):
         LOG.debug("execute, num_tenants=%d, num_users_per_tenant=%d" % \
                   (num_tenants, num_users_per_tenant))
         
+        program_runner = self.program.context['program_runner']
 
         for x in xrange(0,num_tenants):
             """
@@ -62,9 +63,11 @@ class CreateTenantsCmd(cmd.Command):
             cmd_context = {}
             tenant_name = Test_Tenant_Prefix % (x)
             createTenantAndUsersCmd = CreateTenantAndUsers(cmd_context,
-                                                           program,
+                                                           self.program,
                                                            tenant_name=tenant_name,
                                                            num_users=num_users_per_tenant)
+            
+            program_runner.enqueue_command(createTenantAndUsersCmd)
             
             
     def done(self):
@@ -100,8 +103,6 @@ class CreateTenantAndUsers(cmd.Command):
 
     def init(self):
         LOG.debug("init - %s ", self.__class__.__name__)
-
-
 
         # any precondition logic that should prevent the command from being 
         # executed should be coded here
