@@ -175,6 +175,11 @@ class ProgramRunner(object):
         cmd = self.program.commands.popleft()
 
         self.execution_queue.append(cmd)
+    
+    def enqueue_command(self, cmd):
+        self.execution_queue.append(cmd)
+        LOG.debug("enqueued cmd %s in program_runner for execution" %
+                  (cmd.name))
 
     def run(self):
         LOG.debug("ProgramRunner run started")

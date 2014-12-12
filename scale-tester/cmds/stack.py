@@ -141,7 +141,10 @@ def create_stack_cmd(tenant, user, parent_cmd_context, program):
                                           program,
                                           stack_name=stack_name,
                                           tenant_name=tenant.name,
-                                          user_name=user.name)
+                                          user_name=user.name,
+                                          vm_image_id=parent_cmd_context['vm_image_id'],
+                                          external_network=parent_cmd_context['external_network'],
+                                          heat_hot_file=parent_cmd_context['heat_hot_file'])
 
     return create_stack_cmd_obj
     
@@ -188,15 +191,18 @@ class CreateStackCmd(cmd.Command):
         """
         connect as tenant user and obtain keystone handle
         """
+        
+        openstack_conf = self.program.context["openstack_conf"]
+
         keystone_c = \
          cmd.get_keystone_client_for_tenant_user(tenant_name=self.tenant_name,
                                   user_name=self.user_name,
                                   password=self.user_name,
                                   auth_url=\
-                                  self.program.context["openstack_auth_url"])
+                                  openstack_conf["openstack_auth_url"])
 
         # assumming that we're using heat
-        heat_url = self.program.context['openstack_heat_url']
+        heat_url = openstack_conf['openstack_heat_url']
         heat_url = heat_url % (keystone_c.auth_tenant_id)
         
         LOG.debug("heat_url = %s" % (heat_url)) 
