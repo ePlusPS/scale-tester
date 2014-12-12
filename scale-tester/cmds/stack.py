@@ -85,6 +85,10 @@ class CreateStacksCmd(cmd.Command):
         tenant, create and enqueue (in the program_runner) a CreateStackCmd
         object.
         """
+
+        all_stacks = []
+        self.program.context["all_stacks"] = all_stacks
+
         resources = self.program.context['program.resources']
         LOG.debug("Walking resources") 
         if (resources is not None):
@@ -101,6 +105,8 @@ class CreateStacksCmd(cmd.Command):
                     # create child commands for creating individual stacks
                     create_stack_cmd_obj = \
                         create_stack_cmd(tenant,a_user, self.context,self.program)
+
+                    all_stacks.append(create_stack_cmd_obj)
 
                     program_runner = self.program.context['program_runner']
                     program_runner.execution_queue.append(create_stack_cmd_obj)
