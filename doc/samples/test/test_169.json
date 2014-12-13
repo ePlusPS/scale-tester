@@ -11,7 +11,7 @@
             "global_test_parameters" : {
                 "num_of_tenants" : 1,
                 "num_users_per_tenant": 2,
-                "num_networks_per_tenat" : 2,
+                "num_networks_per_tenant" : 2,
                 "num_vms_per_network" : 2,
                 "ext_net":"10.1.10.0/24",
                 "ext_net_gw":"10.1.10.1"
@@ -27,6 +27,7 @@
                 "context" : {
                     "vm_image_id" : "355b3761-a8d3-4650-914e-ea72569346d9",
                     "external_network" : "EXT-NET",
+                    "external_network_id" : "12489859-b6f0-45cf-a502-fa981e26e6ac",
                     "heat_hot_file":"../doc/samples/heat/fip.yaml"
                 }
             },

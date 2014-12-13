@@ -37,7 +37,8 @@ class StackReqRsp:
         params['files']={}
         params['parameters']= {'image_id': \
                                 self.input['image_id'],
-                               'public_net': self.input['public_net']
+                               'public_net': self.input['public_net'],
+                               'public_net_id':self.input['public_net_id']
                               }
 
         params['stack_name']=stack_name
@@ -139,6 +140,7 @@ def create_stack_cmd(tenant, user, parent_cmd_context, program):
                                           user_name=user.name,
                                           vm_image_id=parent_cmd_context['vm_image_id'],
                                           external_network=parent_cmd_context['external_network'],
+                                          external_network_id=parent_cmd_context['external_network_id'],
                                           heat_hot_file=parent_cmd_context['heat_hot_file'])
 
     return create_stack_cmd_obj
@@ -171,6 +173,7 @@ class CreateStackCmd(cmd.Command):
         self.user_name   = kwargs['user_name']
         self.vm_image_id = kwargs['vm_image_id']
         self.external_network = kwargs['external_network']
+        self.external_network_id = kwargs['external_network_id']
         self.heat_hot_file = kwargs['heat_hot_file']
 
 
@@ -212,19 +215,17 @@ class CreateStackCmd(cmd.Command):
         stackReqRsp = StackReqRsp()
         stackReqRsp.input['image_id']=self.vm_image_id
         stackReqRsp.input['public_net']=self.external_network
+        stackReqRsp.input['public_net_id']=self.external_network_id
         stackReqRsp.input['heat_hot_file']=self.heat_hot_file
 
         heat_req = stackReqRsp.generate_heat_create_req(self.stack_name)
         LOG.debug("heat request dictionary generated")
         LOG.debug(pprint.pformat(heat_req))
 
-        """
+        
         resp = heat_c.stacks.create(**heat_req)
        
         # process out-parameters and update Resource tracking dictionaries
-
-        """
-
 
         return cmd.SUCCESS
 
