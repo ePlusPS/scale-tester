@@ -144,10 +144,11 @@ class CreateTenantAndUsers(cmd.Command):
                                         tenant_id=self.created_tenant.id,
                                         enabled=True)
 
-            heat_owner_role = keystone_c.roles.get('heat_stack_owner')
-            keystone_c.roles.add_user_role(create_user,
+            #heat_owner_role = keystone_c.roles.get('heat_stack_owner')
+            heat_owner_role = keystone_c.roles.get('300c7102b7b948dc826dc38e39dfc124')
+            keystone_c.roles.add_user_role(created_user,
                                            heat_owner_role,
-                                           self.create_tenant)
+                                           self.created_tenant)
             # what about the user role?
             LOG.debug("created tenant user %s" % (new_user_name))
             program_resources.add_user(created_user)
