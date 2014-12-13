@@ -141,8 +141,8 @@ class IntraTenantPingTestCommand(cmd.Command):
                 result = self._trigger_ping(src_ip, dst_ip)
                 self.results_dict[src_ip][dst_ip] = result
 
-        for src_ip, result in self.results_dict.items():
-            LOG.debug("Ping Result,  src_ip: %s,  result_rc: %s" % (src_ip, result['rc']))
+        for src_ip, results in self.results_dict.items():
+            LOG.debug("Ping Result,  src_ip: %s,  results: %s" % (src_ip, results))
         
         return cmd.SUCCESS
 
