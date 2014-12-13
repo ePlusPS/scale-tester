@@ -5,7 +5,7 @@
 #########################################################################
 heat_template_version: !!str 2013-05-23
 
-description: HOT template for one network with one VM 
+description: HOT template for one network with two VMs 
 
 parameters:
   image_id:

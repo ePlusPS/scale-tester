@@ -1,0 +1,303 @@
+#########################################################################
+#      Author: Nelson Huang 
+#      Date:   12/12/2014                                               #
+#      Company:OneCloudInc.com                                          #
+#########################################################################
+heat_template_version: !!str 2013-05-23
+
+description: HOT template for three networks each with three VMs 
+
+parameters:
+  image_id:
+    type: string
+    description: Image Name
+
+  public_net:
+    type: string
+    description: public network name
+  
+  public_net_id:
+    type: string
+    description: public network id
+ 
+resources:
+    # network #1
+    sample_net_1:
+        type: OS::Neutron::Net
+        properties:
+            name: net_1
+
+    sample_subnet_1:
+        type: OS::Neutron::Subnet
+        properties:
+            network_id: { get_resource: sample_net_1 }
+            cidr: 13.13.13.0/24
+            gateway_ip: 13.13.13.1
+
+    # network #2
+    sample_net_2:
+        type: OS::Neutron::Net
+        properties:
+            name: net_2
+
+    sample_subnet_2:
+        type: OS::Neutron::Subnet
+        properties:
+            network_id: { get_resource: sample_net_2 }
+            cidr: 14.14.14.0/24
+            gateway_ip: 14.14.14.1
+
+    # network #3
+    sample_net_3:
+        type: OS::Neutron::Net
+        properties:
+            name: net_3
+
+    sample_subnet_3:
+        type: OS::Neutron::Subnet
+        properties:
+            network_id: { get_resource: sample_net_3 }
+            cidr: 15.15.15.0/24
+            gateway_ip: 15.15.15.1
+    
+    # router configuration
+    router1:
+        type: OS::Neutron::Router
+        properties:
+            external_gateway_info:
+                network: { get_param: public_net }
+
+    # router endpoints 
+    router1_interface_1:
+        type: OS::Neutron::RouterInterface
+        properties:
+            router_id: { get_resource: router1 }
+            subnet_id: { get_resource: sample_subnet_1 }
+
+    router1_interface_2:
+        type: OS::Neutron::RouterInterface
+        properties:
+            router_id: { get_resource: router1 }
+            subnet_id: { get_resource: sample_subnet_2 }
+
+
+    router1_interface_3:
+        type: OS::Neutron::RouterInterface
+        properties:
+            router_id: { get_resource: router1 }
+            subnet_id: { get_resource: sample_subnet_3 }
+    
+    # network-1 servers 
+    net_1_server1_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_1 }
+ 
+    net_1_server1:
+        type: OS::Nova::Server
+        properties:
+            name: Net-1-Server1
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: net_1_server1_port }
+
+    net_1_floating_ip1:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: net_1_server1_port }
+    
+    net_1_server2_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_1 }
+ 
+    net_1_server2:
+        type: OS::Nova::Server
+        properties:
+            name: Net-1-Server2
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: net_1_server2_port }
+
+    net_1_floating_ip2:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: net_1_server2_port }
+
+    net_1_server3_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_1 }
+ 
+    net_1_server3:
+        type: OS::Nova::Server
+        properties:
+            name: Net-1-Server3
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: net_1_server3_port }
+
+    net_1_floating_ip3:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: net_1_server3_port }
+
+    # network-2 servers 
+    net_2_server1_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_2 }
+ 
+    net_2_server1:
+        type: OS::Nova::Server
+        properties:
+            name: Net-2-Server1
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: net_2_server1_port }
+
+    net_2_floating_ip1:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: net_2_server1_port }
+    
+    net_2_server2_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_2 }
+ 
+    net_2_server2:
+        type: OS::Nova::Server
+        properties:
+            name: Net-2-Server2
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: net_2_server2_port }
+
+    net_2_floating_ip2:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: net_2_server2_port }
+
+    net_2_server3_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_2 }
+ 
+    net_2_server3:
+        type: OS::Nova::Server
+        properties:
+            name: Net-2-Server3
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: net_2_server3_port }
+
+    net_2_floating_ip3:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: net_2_server3_port }
+
+    # network-3 servers 
+    net_3_server1_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_3 }
+ 
+    net_3_server1:
+        type: OS::Nova::Server
+        properties:
+            name: Net-3-Server1
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: net_3_server1_port }
+
+    net_3_floating_ip1:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: net_3_server1_port }
+    
+    net_3_server2_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_3 }
+ 
+    net_3_server2:
+        type: OS::Nova::Server
+        properties:
+            name: Net-3-Server2
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: net_3_server2_port }
+
+    net_3_floating_ip2:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: net_3_server2_port }
+
+    net_3_server3_port:
+        type: OS::Neutron::Port
+        properties:
+            network_id: { get_resource: sample_net_3 }
+ 
+    net_3_server3:
+        type: OS::Nova::Server
+        properties:
+            name: Net-3-Server3
+            image: { get_param: image_id }
+            flavor: m1.tiny
+            networks:
+                - port: { get_resource: net_3_server3_port }
+
+    net_3_floating_ip3:
+        type: OS::Neutron::FloatingIP
+        properties:
+            floating_network_id: { get_param: public_net_id }
+            port_id: { get_resource: net_3_server3_port }
+
+outputs:
+    net_1_server1_private_ip:
+        description: Private IP address of net-1 server1
+        value: { get_attr: [ net_1_server1, first_address ] }
+    net_1_server2_private_ip:
+        description: Private IP address of net-1 server2
+        value: { get_attr: [ net_1_server2, first_address ] }
+    net_1_server3_private_ip:
+        description: Private IP address of net-1 server3
+        value: { get_attr: [ net_1_server3, first_address ] }
+
+    net_2_server1_private_ip:
+        description: Private IP address of net-2 server1
+        value: { get_attr: [ net_2_server1, first_address ] }
+    net_2_server2_private_ip:
+        description: Private IP address of net-2 server2
+        value: { get_attr: [ net_2_server2, first_address ] }
+    net_2_server3_private_ip:
+        description: Private IP address of net-2 server3
+        value: { get_attr: [ net_2_server3, first_address ] }
+
+    net_3_server1_private_ip:
+        description: Private IP address of net-3 server1
+        value: { get_attr: [ net_3_server1, first_address ] }
+    net_3_server2_private_ip:
+        description: Private IP address of net-3 server2
+        value: { get_attr: [ net_3_server2, first_address ] }
+    net_3_server3_private_ip:
+        description: Private IP address of net-3 server3
+        value: { get_attr: [ net_3_server3, first_address ] }
+
