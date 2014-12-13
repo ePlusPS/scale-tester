@@ -124,18 +124,22 @@ class IntraTenantPingTestCommand(cmd.Command):
                                                 tenant_name=self.tenant_name)
 
         tenant_fixed_ips = []
-        tenant_floating_ips = neutron_session.list_floatingips()
-        for fip in tenant_floating_ips['floatingips']:
-            tenant_fixed_ips.append(fip['fixed_ip_address'])
-            LOG.debug("tenant: %s, floating ip: %s" % (self.tenant_name, fip))
+        tenant_floating_ips = []
+        tenant_floating_ip_objs = neutron_session.list_floatingips()
+        tenant_floating_ip_objs = tenant_floating_ip_objs['floatingips']
+
+        for fip_dict in tenant_floating_ip_objs:
+            tenant_fixed_ips.append(fip_dict['fixed_ip_address'])
+            tenant_floating_ips.append(fip_dict['floating_ip_address'])
+            LOG.debug("tenant: %s, floating ip dict: %s" % (self.tenant_name, fip_dict))
     
         # do all to all ping within tenant
-        for src_ip in tenant_fixed_ips:
+        for src_ip in tenant_floating_ips:
             self.results_dict[src_ip] = {}
-            
+
             for dst_ip in tenant_fixed_ips:
                 result = self._trigger_ping(src_ip, dst_ip)
-                self.results_dict[src_ip] = result
+                self.results_dict[src_ip][dst_ip] = result
 
         for src_ip, result in self.results_dict.items():
             LOG.debug("Ping Result,  src_ip: %s,  result_rc: %s" % (src_ip, result['rc']))
