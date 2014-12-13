@@ -27,8 +27,16 @@
                 "context" : {
                     "vm_image_id" : "355b3761-a8d3-4650-914e-ea72569346d9",
                     "external_network" : "EXT-NET",
-                    "heat_hot_file":"nh.yaml"
+                    "heat_hot_file":"../doc/samples/heat/fip.yaml"
                 }
+            },
+            {
+                "command_name" : "cmds.barrier.StackCreateBarrierCmd",
+                "context" : {}
+            },
+            {
+                "command_name" : "cmds.traffic.TrafficLauncherCmd",
+                "context" : {}
             }
         ]
     }

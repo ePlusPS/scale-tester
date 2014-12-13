@@ -115,8 +115,8 @@ class IntraTenantPingTestCommand(cmd.Command):
 
         """
         LOG.debug("execute")
-
-        auth_url = self.program.context["openstack_auth_url"]
+        openstack_conf = self.program.context["openstack_conf"]
+        auth_url = openstack_conf["openstack_auth_url"]
 
         neutron_session = neutron_client.Client(auth_url=auth_url,
                                                 username=self.user_name,

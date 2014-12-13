@@ -31,11 +31,12 @@ class StackCreateBarrierCmd(cmd.Command):
         return cmd.SUCCESS
 
     def execute(self):
+        openstack_conf = self.program.context['openstack_conf']
 
-        auth_url = self.program.context["openstack_auth_url"]
-        heat_url = self.program.context["openstack_heat_url"]
-        admin_user = self.program.context["openstack_user"]
-        admin_passwd = self.program.context["openstack_password"]
+        auth_url = openstack_conf["openstack_auth_url"]
+        heat_url = openstack_conf["openstack_heat_url"]
+        admin_user = openstack_conf["openstack_user"]
+        admin_passwd = openstack_conf["openstack_password"]
         admin_tenant_name = "admin"
 
         keystone_session = keystone_client.Client(auth_url=auth_url,

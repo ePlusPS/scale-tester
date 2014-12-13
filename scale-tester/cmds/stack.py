@@ -131,11 +131,6 @@ def create_stack_cmd(tenant, user, parent_cmd_context, program):
     """
     stack_name = "stack-" + tenant.name
     cmd_context = {}
-    
-    # this should be parametrized
-    cmd_context['vm_image_id']      = parent_cmd_context['vm_image_id']
-    cmd_context['external_network'] = parent_cmd_context['external_network']
-    cmd_context['heat_hot_file']    = parent_cmd_context['heat_hot_file']
 
     create_stack_cmd_obj = CreateStackCmd(cmd_context,
                                           program,
