@@ -77,5 +77,5 @@ class StackCreateBarrierCmd(cmd.Command):
             LOG.debug("stack status: %s" % stack_item)
             LOG.debug("   stack_id: %s" % stack_item.id)
             stack_id = stack_item.id
-        
+            return stack_item
     
