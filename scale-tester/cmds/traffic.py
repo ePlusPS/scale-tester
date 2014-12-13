@@ -7,7 +7,7 @@ import cmd
 LOG = logging.getLogger("scale_tester")
 
 
-class TrafficLauncherCommand(cmd.Command):
+class TrafficLauncherCmd(cmd.Command):
     """
     This command triggers a ping from a VM to a destination IP.
     """
