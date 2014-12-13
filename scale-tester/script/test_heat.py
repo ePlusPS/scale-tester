@@ -111,7 +111,7 @@ def main():
     # pprint.pprint(json_template)
 
     resp = heat.stacks.create(**params)
-
+    
     print("resp type: %s" % type(resp))
     for i in resp:
         print("resp item: %s" % i)
