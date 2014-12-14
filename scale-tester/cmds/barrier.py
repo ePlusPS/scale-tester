@@ -31,31 +31,17 @@ class StackCreateBarrierCmd(cmd.Command):
         return cmd.SUCCESS
 
     def execute(self):
-        openstack_conf = self.program.context['openstack_conf']
-
-        auth_url = openstack_conf["openstack_auth_url"]
-        heat_url = openstack_conf["openstack_heat_url"]
-        admin_user = openstack_conf["openstack_user"]
-        admin_passwd = openstack_conf["openstack_password"]
-        admin_tenant_name = "admin"
-
-        keystone_session = keystone_client.Client(auth_url=auth_url,
-                                                username=admin_user,
-                                                password=admin_passwd,
-                                                tenant_name=admin_tenant_name)
-
-        heat_session = heat_client.Client(heat_url,
-                                          token=keystone_session.auth_token)
 
         all_stacks = self.program.context["all_stacks"]
         pending_stacks = []
         done_stacks = []
         for stack_cmd in all_stacks:
             pending_stacks.append(stack_cmd)
+            stack_cmd.heat_session = self._get_session_for_stack(stack_cmd)
 
         while len(pending_stacks) > 0:
             for stack_cmd in pending_stacks:
-                stack_status = self._get_stack(heat_session, stack_cmd.stack_name)                
+                stack_status = self._get_stack(stack_cmd.heat_session, stack_cmd.stack_name)                
                 if(stack_status['stack_status'] == "CREATE_COMPLETE"):
                     pending_stacks.remove(stack_cmd)
                     done_stacks.append(stack_cmd)
@@ -70,6 +56,26 @@ class StackCreateBarrierCmd(cmd.Command):
         No-op
         """
         return cmd.SUCCESS
+
+    def _get_session_for_stack(self, stack_cmd):
+        openstack_conf = self.program.context['openstack_conf']
+        auth_url = openstack_conf["openstack_auth_url"]
+        heat_url = openstack_conf["openstack_heat_url"]
+        # admin_user = openstack_conf["openstack_user"]
+        # admin_passwd = openstack_conf["openstack_password"]
+        # admin_tenant_name = "admin"
+
+        keystone_session = keystone_client.Client(auth_url=auth_url,
+                                                  username=stack_cmd.user_name,
+                                                  password=stack_cmd.user_name,
+                                                  tenant_name=stack_cmd.tenant_name)
+
+        heat_session = heat_client.Client(heat_url,
+                                          token=keystone_session.auth_token)
+        
+        return heat_session
+
+
     
     def _get_stack(self, heat_session, stack_name):
         filter = {"name": stack_name}
