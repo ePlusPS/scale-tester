@@ -88,10 +88,10 @@ class CreateTenantsCmd(cmd.Command):
 def get_keystone_role(keystone_c,role_name="heat_stack_owner"):
     """
     Given a valid keystone client instance, return the heat_stack_owner
-    role
-
-    If found, will return the role object for "heat_stack_owner", otherwise
-    None returned
+    role.  This function allows a role_name to be used to search keystone.
+    Normally, keystone.roles.get expects a uuid to be used for retrieving a 
+    role which isn't too friendly.  If found, will return the role object 
+    for "heat_stack_owner", otherwise None returned
     """
     found_role = None
 
@@ -143,8 +143,6 @@ class CreateTenantAndUsers(cmd.Command):
                      (self.tenant_name))
             return cmd.FAILURE_CONTINUE
 
-
-
     def execute(self):
         """
         When this command is executed, if successful, it will modify the
@@ -189,14 +187,6 @@ class CreateTenantAndUsers(cmd.Command):
                                         enabled=True)
             
             # associate role, heat_stack_owner to tenant user
-            # For some reason, a get using the actual name, "heat_stack_owner"
-            # doesn't work, instead uuid of the role does
-            # heat_owner_role_id = \
-            #    heat_stack_owner_role.id
-            # openstack_conf['openstack_heat_stack_owner_role_id']
-
-            # heat_owner_role = keystone_c.roles.get(heat_owner_role_id)
-
             keystone_c.roles.add_user_role(created_user,
                                            heat_stack_owner_role,
                                            self.created_tenant)
