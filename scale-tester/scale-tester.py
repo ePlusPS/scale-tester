@@ -33,7 +33,7 @@ formatter2 = \
     logging.Formatter('%(asctime)s - %(module)s - %(funcName)s - (%(lineno)d) %(levelname)s %(message)s')
 fh2 = logging.FileHandler("info.log")
 fh2.setLevel(logging.INFO)
-fh2.setFormatter(formatter)
+fh2.setFormatter(formatter2)
 LOG.addHandler(fh2)
 
 def parse_args():

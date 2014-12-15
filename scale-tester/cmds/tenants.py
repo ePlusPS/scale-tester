@@ -85,6 +85,29 @@ class CreateTenantsCmd(cmd.Command):
         """
         LOG.debug("Undo")
 
+def get_keystone_role(keystone_c,role_name="heat_stack_owner"):
+    """
+    Given a valid keystone client instance, return the heat_stack_owner
+    role
+
+    If found, will return the role object for "heat_stack_owner", otherwise
+    None returned
+    """
+    found_role = None
+
+    if (role_name is not None and
+        keystone_c is not None):
+
+        list_of_roles = keystone_c.roles.list()
+
+        for role in list_of_roles:
+            if (role.name == role_name):
+                found_role = role
+                LOG.debug("Found role %s" % (role_name))
+                break;
+
+    return found_role
+
 class CreateTenantAndUsers(cmd.Command):
     """
     This command creates a tenant and also creates a specified number 
@@ -121,6 +144,7 @@ class CreateTenantAndUsers(cmd.Command):
             return cmd.FAILURE_CONTINUE
 
 
+
     def execute(self):
         """
         When this command is executed, if successful, it will modify the
@@ -136,17 +160,23 @@ class CreateTenantAndUsers(cmd.Command):
         
         # obtain keystone handle using global context (aka admin account)
         keystone_c = cmd.get_keystone_client(self.program)
-        
+
+
         # create the tenant/project
         self.created_tenant = \
                         keystone_c.tenants.create(tenant_name=self.tenant_name,
                         description='scale test created',
                         enabled = True)
         
-
         program_resources.add_tenant(self.created_tenant)
         
         openstack_conf = self.program.context["openstack_conf"]
+
+        # debug ... see if this even works
+        pu.db 
+        heat_stack_owner_role = \
+            get_keystone_role(keystone_c, \
+                  openstack_conf["openstack_heat_stack_owner_role"])
         
         # create users for the tenant
         for i in xrange(0,self.num_users):
@@ -161,13 +191,14 @@ class CreateTenantAndUsers(cmd.Command):
             # associate role, heat_stack_owner to tenant user
             # For some reason, a get using the actual name, "heat_stack_owner"
             # doesn't work, instead uuid of the role does
-            heat_owner_role_id = \
-            openstack_conf['openstack_heat_stack_owner_role_id']
+            # heat_owner_role_id = \
+            #    heat_stack_owner_role.id
+            # openstack_conf['openstack_heat_stack_owner_role_id']
 
-            heat_owner_role = keystone_c.roles.get(heat_owner_role_id)
+            # heat_owner_role = keystone_c.roles.get(heat_owner_role_id)
 
             keystone_c.roles.add_user_role(created_user,
-                                           heat_owner_role,
+                                           heat_stack_owner_role,
                                            self.created_tenant)
 
             LOG.debug("created tenant user %s" % (new_user_name))
