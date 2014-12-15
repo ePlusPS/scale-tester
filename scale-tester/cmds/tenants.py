@@ -8,7 +8,7 @@ import pudb
 
 LOG = logging.getLogger("scale_tester")
 
-Test_Tenant_Prefix = "test-tenant-%d"
+# Test_Tenant_Prefix = "test-tenant-%d"
 
 class CreateTenantsCmd(cmd.Command):
     """
@@ -46,7 +46,8 @@ class CreateTenantsCmd(cmd.Command):
             self.program.context['program.resources'] = resources
 
         global_test_params = self.program.context["global_test_parameters"]
-
+        
+        tenant_name_prefix = global_test_params['tenant_name_prefix']
         num_tenants = global_test_params['num_of_tenants']
         num_users_per_tenant = global_test_params['num_users_per_tenant']
 
@@ -61,7 +62,10 @@ class CreateTenantsCmd(cmd.Command):
             Each tenant will be named "Test_Tenant_Prefix + index"
             """
             cmd_context = {}
-            tenant_name = Test_Tenant_Prefix % (x)
+
+            # so if tenant_name_prefix == tenant-test, then the tenant_name
+            # will be tenant-test-0, tenant-test-1, etc
+            tenant_name = "%s-%d" % (tenant_name_prefix,x)
             createTenantAndUsersCmd = CreateTenantAndUsers(cmd_context,
                                                            self.program,
                                                            tenant_name=tenant_name,
@@ -69,15 +73,17 @@ class CreateTenantsCmd(cmd.Command):
             
             program_runner.enqueue_command(createTenantAndUsersCmd)
             
+        return cmd.SUCCESS
             
     def done(self):
         LOG.debug("done")
+        return cmd.SUCCESS
     
     def undo(self):
         """
         Actual work is performed in child CreateTenantAndUsers cmd
         """
-        LOG.debug("undo")
+        LOG.debug("Undo")
 
 class CreateTenantAndUsers(cmd.Command):
     """
@@ -106,10 +112,13 @@ class CreateTenantAndUsers(cmd.Command):
 
         # any precondition logic that should prevent the command from being 
         # executed should be coded here
-        if ("program.resources" in self.program.context): 
+        if ("program.resources" in self.program.context and
+            "openstack_conf" in self.program.context): 
             return cmd.SUCCESS
         else:
-            return cmd.FAILURE
+            LOG.info("Preconditions for creating tenant %s were not met" % \
+                     (self.tenant_name))
+            return cmd.FAILURE_CONTINUE
 
 
     def execute(self):
@@ -125,8 +134,10 @@ class CreateTenantAndUsers(cmd.Command):
         # obtain handle to program context/program resources
         program_resources = self.program.context["program.resources"]
         
+        # obtain keystone handle using global context (aka admin account)
         keystone_c = cmd.get_keystone_client(self.program)
-
+        
+        # create the tenant/project
         self.created_tenant = \
                         keystone_c.tenants.create(tenant_name=self.tenant_name,
                         description='scale test created',
@@ -134,7 +145,10 @@ class CreateTenantAndUsers(cmd.Command):
         
 
         program_resources.add_tenant(self.created_tenant)
-
+        
+        openstack_conf = self.program.context["openstack_conf"]
+        
+        # create users for the tenant
         for i in xrange(0,self.num_users):
             new_user_name = "%s-%d" % (self.tenant_name,i)
 
@@ -143,17 +157,25 @@ class CreateTenantAndUsers(cmd.Command):
                                         email=None,
                                         tenant_id=self.created_tenant.id,
                                         enabled=True)
+            
+            # associate role, heat_stack_owner to tenant user
+            # For some reason, a get using the actual name, "heat_stack_owner"
+            # doesn't work, instead uuid of the role does
+            heat_owner_role_id = \
+            openstack_conf['openstack_heat_stack_owner_role_id']
 
-            #heat_owner_role = keystone_c.roles.get('heat_stack_owner')
-            heat_owner_role = keystone_c.roles.get('300c7102b7b948dc826dc38e39dfc124')
+            heat_owner_role = keystone_c.roles.get(heat_owner_role_id)
+
             keystone_c.roles.add_user_role(created_user,
                                            heat_owner_role,
                                            self.created_tenant)
-            # what about the user role?
+
             LOG.debug("created tenant user %s" % (new_user_name))
             program_resources.add_user(created_user)
             self.created_users.append(created_user)
-
+        
+        LOG.info("Successfully created tenant %s and users %s" % \
+                (self.tenant_name, pprint.pformat(self.created_users)))
         return cmd.SUCCESS
 
     def done(self):

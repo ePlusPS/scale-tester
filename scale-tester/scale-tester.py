@@ -22,10 +22,19 @@ LOG = logging.getLogger("scale_tester")
 formatter = \
     logging.Formatter('%(asctime)s - %(module)s - %(funcName)s - (%(lineno)d) %(levelname)s \n %(message)s')
 
+# All inclusive log
 fh = logging.FileHandler("scale_tester.log")
 fh.setFormatter(formatter)
 LOG.addHandler(fh)
 LOG.setLevel(logging.DEBUG)
+
+# just info level logging
+formatter2 = \
+    logging.Formatter('%(asctime)s - %(module)s - %(funcName)s - (%(lineno)d) %(levelname)s %(message)s')
+fh2 = logging.FileHandler("info.log")
+fh2.setLevel(logging.INFO)
+fh2.setFormatter(formatter)
+LOG.addHandler(fh2)
 
 def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)

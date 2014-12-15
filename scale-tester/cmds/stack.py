@@ -143,6 +143,8 @@ def create_stack_cmd(tenant, user, parent_cmd_context, program):
                                           external_network_id=parent_cmd_context['external_network_id'],
                                           heat_hot_file=parent_cmd_context['heat_hot_file'])
 
+    LOG.info("CreateStackCmd obj for stack %s, tenant %s, user %s created" % \
+              (stack_name, tenant.name, user.name))
     return create_stack_cmd_obj
     
 
@@ -168,6 +170,7 @@ class CreateStackCmd(cmd.Command):
         self.context = cmd_context
         self.program = program
         
+        self.stack_id = ""
         self.stack_name = kwargs['stack_name']
         self.tenant_name = kwargs['tenant_name']
         self.user_name   = kwargs['user_name']
@@ -222,10 +225,13 @@ class CreateStackCmd(cmd.Command):
         LOG.debug("heat request dictionary generated")
         LOG.debug(pprint.pformat(heat_req))
 
-        
         resp = heat_c.stacks.create(**heat_req)
-       
-        # process out-parameters and update Resource tracking dictionaries
+
+        stack_response = resp['stack']
+        self.stack_id = stack_response['id']
+
+        # process out-parameters ?
+        # we track resources later using the StackCreateBarrierCmd 
 
         return cmd.SUCCESS
 
@@ -233,4 +239,27 @@ class CreateStackCmd(cmd.Command):
         """
         When invoked, will delete the stack created by this command
         """
+        LOG.debug("undo")
+        openstack_conf = self.program.context["openstack_conf"]
+
+        keystone_c = \
+         cmd.get_keystone_client_for_tenant_user(tenant_name=self.tenant_name,
+                                  user_name=self.user_name,
+                                  password=self.user_name,
+                                  auth_url=\
+                                  openstack_conf["openstack_auth_url"])
+
+        # assumming that we're using heat
+        heat_url = openstack_conf['openstack_heat_url']
+        heat_url = heat_url % (keystone_c.auth_tenant_id)
+        
+        LOG.debug("heat_url = %s" % (heat_url)) 
+        
+        heat_c = heat_client.Client(heat_url,
+                                    token=keystone_c.auth_token)
+
+        LOG.debug("obtained heat client")
+        LOG.debug("we will plan to delete stack-id %s" % (self.stack_id))
+        # heat_c.stacks.delete(self.stack_id)
+
         return cmd.SUCCESS
