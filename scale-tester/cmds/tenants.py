@@ -170,8 +170,6 @@ class CreateTenantAndUsers(cmd.Command):
         
         openstack_conf = self.program.context["openstack_conf"]
 
-        # debug ... see if this even works
-        pu.db 
         heat_stack_owner_role = \
             get_keystone_role(keystone_c, \
                   openstack_conf["openstack_heat_stack_owner_role"])
