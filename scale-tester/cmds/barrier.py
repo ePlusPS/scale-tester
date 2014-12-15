@@ -42,9 +42,12 @@ class StackCreateBarrierCmd(cmd.Command):
         while len(pending_stacks) > 0:
             for stack_cmd in pending_stacks:
                 stack_status = self._get_stack(stack_cmd.heat_session, stack_cmd.stack_name)                
-                if(stack_status['stack_status'] == "CREATE_COMPLETE"):
+                if(stack_status.stack_status == "CREATE_COMPLETE"):
                     pending_stacks.remove(stack_cmd)
                     done_stacks.append(stack_cmd)
+
+            LOG.debug("pending stacks: %s" % pending_stacks)
+            LOG.debug("done stacks: %s" % done_stacks)
 
             if len(pending_stacks) > 0:
                 time.sleep(5)
@@ -69,6 +72,8 @@ class StackCreateBarrierCmd(cmd.Command):
                                                   username=stack_cmd.user_name,
                                                   password=stack_cmd.user_name,
                                                   tenant_name=stack_cmd.tenant_name)
+
+        heat_url = 'http://10.1.10.169:8004/v1/%s' % (keystone_session.auth_tenant_id) 
 
         heat_session = heat_client.Client(heat_url,
                                           token=keystone_session.auth_token)

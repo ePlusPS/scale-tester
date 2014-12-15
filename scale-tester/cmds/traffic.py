@@ -60,7 +60,7 @@ class TrafficLauncherCmd(cmd.Command):
                                                                     stack_name=stack_name,
                                                                     tenant_name=tenant.name,
                                                                     user_name=a_user.name,
-                                                                    password=a_user.password)
+                                                                    password=a_user.name)
 
                     program_runner = self.program.context['program_runner']
                     program_runner.execution_queue.append(intra_ping_cmd_obj)
