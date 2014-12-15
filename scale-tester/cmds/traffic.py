@@ -3,6 +3,7 @@ import paramiko
 import neutronclient.v2_0.client as neutron_client
 import pprint
 import cmd
+import subprocess
 
 LOG = logging.getLogger("scale_tester")
 
@@ -132,7 +133,22 @@ class IntraTenantPingTestCommand(cmd.Command):
             tenant_fixed_ips.append(fip_dict['fixed_ip_address'])
             tenant_floating_ips.append(fip_dict['floating_ip_address'])
             LOG.debug("tenant: %s, floating ip dict: %s" % (self.tenant_name, fip_dict))
-    
+
+        # check that machines are up before proceeding
+        ping_ip_list = list(tenant_floating_ips)
+        while len(ping_ip_list) > 0:
+            for fip in ping_ip_list:
+                try:
+                    cmd_str = "ping -c 5 %s" % fip
+                    LOG.debug("running command: %s" % cmd_str)
+                    subprocess.check_call(cmd_str)
+                    ping_ip_list.remove(fip)
+                    LOG.debug("ping command success")
+                except subprocess.CalledProcessError:
+                    LOG.debug("ping command failed")
+            if len(ping_ip_list) > 0:
+                time.sleep(10)
+                    
         # do all to all ping within tenant
         for src_ip in tenant_floating_ips:
             self.results_dict[src_ip] = {}
