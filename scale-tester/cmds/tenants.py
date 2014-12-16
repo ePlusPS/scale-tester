@@ -108,6 +108,25 @@ def get_keystone_role(keystone_c,role_name="heat_stack_owner"):
 
     return found_role
 
+def get_keystone_user(keystone_c, user_name):
+    """
+    Given a valid keystone client instance, return the user
+    object as specified by user_name (string)
+    """
+    found_user = None
+
+    if (user_name is not None and
+        keystone_c is not None):
+
+        list_of_users = keystone_c.users.list()
+        
+        for user in list_of_users:
+            if (user.username == user_name):
+                found_user = user
+                break
+
+    return found_user
+
 class CreateTenantAndUsers(cmd.Command):
     """
     This command creates a tenant and also creates a specified number 
@@ -170,6 +189,14 @@ class CreateTenantAndUsers(cmd.Command):
         
         openstack_conf = self.program.context["openstack_conf"]
 
+        # associate admin user with newly created tenant project
+        admin_user = get_keystone_user(keystone_c,"admin")
+        admin_role = get_keystone_role(keystone_c,"admin")
+        keystone_c.roles.add_user_role(admin_user,
+                                       admin_role,
+                                       self.created_tenant)
+        
+        # retrieve heat_stack_owner role
         heat_stack_owner_role = \
             get_keystone_role(keystone_c, \
                   openstack_conf["openstack_heat_stack_owner_role"])
@@ -214,9 +241,10 @@ class CreateTenantAndUsers(cmd.Command):
 
         if (self.created_tenant is not None):
             keystone_c.tenants.delete(self.created_tenant)
+            LOG.info("deleted tenant %s",str(self.created_tenant))
 
         for user in self.created_users:
-            LOG.debug("deleting %s",str(user))
             keystone_c.users.delete(user)
+            LOG.info("deleted %s",str(user))
 
         return cmd.SUCCESS

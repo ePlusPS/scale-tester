@@ -31,6 +31,7 @@ class StackCreateBarrierCmd(cmd.Command):
         return cmd.SUCCESS
 
     def execute(self):
+        LOG.info("Wait for all stacks to come up")
 
         all_stacks = self.program.context["all_stacks"]
         pending_stacks = []
@@ -50,8 +51,10 @@ class StackCreateBarrierCmd(cmd.Command):
             LOG.debug("done stacks: %s" % done_stacks)
 
             if len(pending_stacks) > 0:
+                LOG.info("...")
                 time.sleep(5)
 
+        LOG.info("Stacks are up")
         return cmd.SUCCESS
     
     def undo(self):

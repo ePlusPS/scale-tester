@@ -132,7 +132,7 @@ class IntraTenantPingTestCommand(cmd.Command):
         for fip_dict in tenant_floating_ip_objs:
             tenant_fixed_ips.append(fip_dict['fixed_ip_address'])
             tenant_floating_ips.append(fip_dict['floating_ip_address'])
-            LOG.debug("tenant: %s, floating ip dict: %s" % (self.tenant_name, fip_dict))
+            LOG.info("tenant: %s, floating ip dict: %s" % (self.tenant_name, fip_dict))
 
         # check that machines are up before proceeding
         ping_ip_list = list(tenant_floating_ips)
@@ -140,12 +140,12 @@ class IntraTenantPingTestCommand(cmd.Command):
             for fip in ping_ip_list:
                 try:
                     cmd_str = "ping -c 5 %s" % fip
-                    LOG.debug("running command: %s" % cmd_str)
+                    LOG.info("running command: %s" % cmd_str)
                     subprocess.check_call(cmd_str)
                     ping_ip_list.remove(fip)
-                    LOG.debug("ping command success")
+                    LOG.info("ping command success")
                 except subprocess.CalledProcessError:
-                    LOG.debug("ping command failed")
+                    LOG.info("ping command failed")
             if len(ping_ip_list) > 0:
                 time.sleep(10)
                     
@@ -158,7 +158,7 @@ class IntraTenantPingTestCommand(cmd.Command):
                 self.results_dict[src_ip][dst_ip] = result
 
         for src_ip, results in self.results_dict.items():
-            LOG.debug("Ping Result,  src_ip: %s,  results: %s" % (src_ip, results))
+            LOG.info("Ping Result,  src_ip: %s,  results: %s" % (src_ip, results))
         
         return cmd.SUCCESS
 

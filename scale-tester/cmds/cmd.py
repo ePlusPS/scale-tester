@@ -87,3 +87,16 @@ class Command(object):
         a command are roll-back
         """
         pass
+    
+    def get_result():
+        """
+        If implemented, returns a success/fail status code 
+        for the command
+        """
+        return SUCCESS
+
+    def get_result_detail():
+        """
+        Returns a string describing the results for a command
+        """
+        pass

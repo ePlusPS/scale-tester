@@ -143,7 +143,7 @@ def create_stack_cmd(tenant, user, parent_cmd_context, program):
                                           external_network_id=parent_cmd_context['external_network_id'],
                                           heat_hot_file=parent_cmd_context['heat_hot_file'])
 
-    LOG.info("CreateStackCmd obj for stack %s, tenant %s, user %s created" % \
+    LOG.info("CreateStackCmd obj for stack %s, tenant %s, user %s instantiated" % \
               (stack_name, tenant.name, user.name))
     return create_stack_cmd_obj
     
@@ -229,9 +229,9 @@ class CreateStackCmd(cmd.Command):
 
         stack_response = resp['stack']
         self.stack_id = stack_response['id']
-
-        # process out-parameters ?
-        # we track resources later using the StackCreateBarrierCmd 
+        
+        LOG.info("Stack: %s, tenant: %s, user %s executed" % \
+              (self.stack_name, self.tenant_name, self.user_name))
 
         return cmd.SUCCESS
 
