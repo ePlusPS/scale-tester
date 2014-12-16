@@ -39,7 +39,9 @@
             },
             {
                 "command_name" : "cmds.traffic.TrafficLauncherCmd",
-                "context" : {}
+                "context" : {
+                    "sub_cmd" : "cmds.traffic.CrossTenantPingTestCmd"
+                }
             }
         ]
     }

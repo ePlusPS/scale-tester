@@ -1,13 +1,19 @@
 import logging
-import paramiko
-import neutronclient.v2_0.client as neutron_client
 import pprint
 import cmd
 import subprocess
 import time
+import re
+import importlib
+
+import paramiko
+import neutronclient.v2_0.client as neutron_client
 
 LOG = logging.getLogger("scale_tester")
 
+DEFAULT_SUB_CMD = "cmds.traffic.IntraTenantPingTestCmd"
+
+MODULE_CLASS_REGEX = "(.*).(\w+)"
 
 class TrafficLauncherCmd(cmd.Command):
     """
@@ -77,13 +83,27 @@ class TrafficLauncherCmd(cmd.Command):
                     tenant_ips[tenant_id] = self._get_ips_for_tenant(tenant, a_user)
 
                     stack_name = "stack-" + tenant.name
-                    intra_ping_cmd_obj = IntraTenantPingTestCommand(self.cmd_context,
-                                                                    self.program,
-                                                                    stack_name=stack_name,
-                                                                    tenant_name=tenant.name,
-                                                                    tenant_id=tenant_id,
-                                                                    user_name=a_user.name,
-                                                                    password=a_user.name)
+
+                    if "sub_cmd" in self.cmd_context:
+                        sub_cmd = self.cmd_context["sub_cmd"]
+                    else:
+                        sub_cmd = DEFAULT_SUB_CMD
+                    
+                    match_results = re.match(MODULE_CLASS_REGEX, sub_cmd)
+                    
+                    module = importlib.import_module(match_results.group(0))
+                    class_obj = getattr(module,match_results.group(1))
+
+                    LOG.debug("module_path=%s" % module)
+                    LOG.debug("class name = %s " % class_obj)
+
+                    intra_ping_cmd_obj = class_obj(self.cmd_context,
+                                                   self.program,
+                                                   stack_name=stack_name,
+                                                   tenant_name=tenant.name,
+                                                   tenant_id=tenant_id,
+                                                   user_name=a_user.name,
+                                                   password=a_user.name)
 
                     program_runner = self.program.context['program_runner']
                     program_runner.execution_queue.append(intra_ping_cmd_obj)
@@ -109,7 +129,7 @@ class TrafficLauncherCmd(cmd.Command):
         return cmd.SUCCESS
 
 
-class IntraTenantPingTestCommand(cmd.Command):
+class IntraTenantPingTestCmd(cmd.Command):
 
     def __init__(self, cmd_context, program, **kwargs):
         """
@@ -332,6 +352,19 @@ class IntraTenantPingTestCommand(cmd.Command):
 
         return {"rc": rc,
                 "stdout": output_lines}
+
+
+class CrossTenantPingTestCmd(IntraTenantPingTestCmd):
+    
+    def _get_dst_ip_list(self):
+        resources = self.program.context['program.resources']
+        tenant_floating_ips = []
+        for tenant_id, fips in resources.tenant_ips.items():
+            for fip_dict in fips:
+                tenant_floating_ips.append(fip_dict['floating_ip_address'])
+                LOG.debug("tenant: %s, floating ip dict: %s" % (self.tenant_name, fip_dict))
+
+        return tenant_floating_ips
 
 
 def main():
