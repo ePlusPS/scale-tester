@@ -21,6 +21,18 @@ parameters:
     description: public network id
  
 resources:
+
+#    the_sg:
+#        type: OS::Neutron::SecurityGroup
+#        properties:
+#            name: the_sg
+#            description: Ping and SSH
+#            rules:
+#            - protocol: icmp
+#            - protocol: tcp
+#              port_range_min: 22
+#              port_range_max: 22
+
     sample_net_1:
         type: OS::Neutron::Net
         properties:
@@ -78,6 +90,7 @@ resources:
             flavor: m1.tiny
             networks:
                 - port: { get_resource: server2_port }
+            
 
     floating_ip2:
         type: OS::Neutron::FloatingIP
