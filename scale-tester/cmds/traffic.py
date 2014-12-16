@@ -31,6 +31,22 @@ class TrafficLauncherCmd(cmd.Command):
         return cmd.SUCCESS
 
 
+    def _get_ips_for_tenant(self, tenant, user):
+        # retrieve set of IPs for this tenant
+
+        openstack_conf = self.program.context["openstack_conf"]
+        auth_url = openstack_conf["openstack_auth_url"]
+
+        neutron_session = neutron_client.Client(auth_url=auth_url,
+                                                username=user.name,
+                                                password=user.name,
+                                                tenant_name=tenant.name)
+
+        tenant_floating_ip_objs = neutron_session.list_floatingips()
+        tenant_floating_ip_objs = tenant_floating_ip_objs['floatingips']
+
+        return tenant_floating_ip_objs
+
     def execute(self):
         """
         When this command is executed, it will run a ping command on a VM, targeting the dest IP.
@@ -43,6 +59,9 @@ class TrafficLauncherCmd(cmd.Command):
         #program_resources = self.program.context["program.resources"]
 
         resources = self.program.context['program.resources']
+
+        tenant_ips = {}
+
         LOG.debug("Walking resources") 
         if (resources is not None):
             for tenant_id in resources.tenants:
@@ -55,11 +74,14 @@ class TrafficLauncherCmd(cmd.Command):
                     LOG.debug(pprint.pformat(resources.tenant_users[tenant_id][0]))
                     a_user = resources.tenant_users[tenant_id][0]
 
+                    tenant_ips[tenant_id] = self._get_ips_for_tenant(tenant, a_user)
+
                     stack_name = "stack-" + tenant.name
                     intra_ping_cmd_obj = IntraTenantPingTestCommand(self.cmd_context,
                                                                     self.program,
                                                                     stack_name=stack_name,
                                                                     tenant_name=tenant.name,
+                                                                    tenant_id=tenant_id,
                                                                     user_name=a_user.name,
                                                                     password=a_user.name)
 
@@ -69,6 +91,8 @@ class TrafficLauncherCmd(cmd.Command):
                            program_runner execution_queue" % \
                            (tenant.name,a_user.name)
                     LOG.debug(msg)
+
+        resources.tenant_ips = tenant_ips
         
         return cmd.SUCCESS
 
@@ -97,6 +121,7 @@ class IntraTenantPingTestCommand(cmd.Command):
 
         self.stack_name = kwargs['stack_name']
         self.tenant_name = kwargs['tenant_name']
+        self.tenant_id = kwargs['tenant_id']
         self.user_name   = kwargs['user_name']
         self.password = kwargs['password']
 
@@ -109,45 +134,18 @@ class IntraTenantPingTestCommand(cmd.Command):
         # executed should be coded here
         return cmd.SUCCESS
 
-
     def execute(self):
         """
         When this command is executed, it will run a ping command on a VM, targeting the dest IP.
         """
         LOG.debug("execute")
-        openstack_conf = self.program.context["openstack_conf"]
-        auth_url = openstack_conf["openstack_auth_url"]
+                
+        self._setup_tenant()
 
-        neutron_session = neutron_client.Client(auth_url=auth_url,
-                                                username=self.user_name,
-                                                password=self.password,
-                                                tenant_name=self.tenant_name)
-
-        # LOG.debug("Sleeping for 300s, go make security group rules")
-        # time.sleep(300)
-        # LOG.debug("Done sleeping, retrieving security groups")
-
-        # make default security group allow ICMP and SSH
-        security_groups = neutron_session.list_security_groups()
-        LOG.debug("security_groups: %s" % security_groups)
-        security_groups = security_groups['security_groups']
-        for sg in security_groups:
-            if sg['name'] == "default":
-                sg_id = sg['id']
-                LOG.debug("found default secgrp, adding ssh/icmp rules")
-                self._add_icmp_ssh_sg_rules(neutron_session, sg_id)                
-
-        tenant_fixed_ips = []
-        tenant_floating_ips = []
-        tenant_floating_ip_objs = neutron_session.list_floatingips()
-        tenant_floating_ip_objs = tenant_floating_ip_objs['floatingips']
-
-        for fip_dict in tenant_floating_ip_objs:
-            tenant_fixed_ips.append(fip_dict['fixed_ip_address'])
-            tenant_floating_ips.append(fip_dict['floating_ip_address'])
-            LOG.debug("tenant: %s, floating ip dict: %s" % (self.tenant_name, fip_dict))
-
-        pending_session_list = list(tenant_floating_ips)
+        src_ip_list = self._get_src_ip_list()
+        dst_ip_list = self._get_dst_ip_list()
+        
+        pending_session_list = list(src_ip_list)
         session_dict = {}
 
         LOG.debug("Attempting to create SSH sessions...")
@@ -167,10 +165,10 @@ class IntraTenantPingTestCommand(cmd.Command):
                 time.sleep(10)
             
         # do all to all ping within tenant
-        for src_ip in tenant_floating_ips:
+        for src_ip in src_ip_list:
             self.results_dict[src_ip] = {}
 
-            for dst_ip in tenant_fixed_ips:
+            for dst_ip in dst_ip_list:
                 ssh_session = session_dict[src_ip]
                 result = self._trigger_ping(ssh_session, dst_ip)
                 self.results_dict[src_ip][dst_ip] = result
@@ -193,6 +191,25 @@ class IntraTenantPingTestCommand(cmd.Command):
         LOG.debug("undo")
 
         return cmd.SUCCESS
+
+    def _setup_tenant(self):
+        openstack_conf = self.program.context["openstack_conf"]
+        auth_url = openstack_conf["openstack_auth_url"]
+
+        neutron_session = neutron_client.Client(auth_url=auth_url,
+                                                username=self.user_name,
+                                                password=self.password,
+                                                tenant_name=self.tenant_name)
+
+        # make default security group allow ICMP and SSH
+        security_groups = neutron_session.list_security_groups()
+        LOG.debug("security_groups: %s" % security_groups)
+        security_groups = security_groups['security_groups']
+        for sg in security_groups:
+            if sg['name'] == "default":
+                sg_id = sg['id']
+                LOG.debug("found default secgrp, adding ssh/icmp rules")
+                self._add_icmp_ssh_sg_rules(neutron_session, sg_id)        
 
 
     def _add_icmp_ssh_sg_rules(self, neutron_session, sg_id):
@@ -250,6 +267,38 @@ class IntraTenantPingTestCommand(cmd.Command):
             if len(ping_ip_list) > 0:
                 LOG.debug("sleeping for 10s...")
                 time.sleep(10)
+
+
+    def _get_src_ip_list(self):
+        resources = self.program.context['program.resources']
+
+        tenant_floating_ip_objs = resources.tenant_ips[self.tenant_id]
+
+        tenant_fixed_ips = []
+        tenant_floating_ips = []
+
+        for fip_dict in tenant_floating_ip_objs:
+            tenant_fixed_ips.append(fip_dict['fixed_ip_address'])
+            tenant_floating_ips.append(fip_dict['floating_ip_address'])
+            LOG.debug("tenant: %s, floating ip dict: %s" % (self.tenant_name, fip_dict))
+
+        return tenant_floating_ips
+
+    def _get_dst_ip_list(self):
+        resources = self.program.context['program.resources']
+
+        tenant_floating_ip_objs = resources.tenant_ips[self.tenant_id]
+
+        tenant_fixed_ips = []
+        tenant_floating_ips = []
+
+        for fip_dict in tenant_floating_ip_objs:
+            tenant_fixed_ips.append(fip_dict['fixed_ip_address'])
+            tenant_floating_ips.append(fip_dict['floating_ip_address'])
+            LOG.debug("tenant: %s, floating ip dict: %s" % (self.tenant_name, fip_dict))
+
+        return tenant_fixed_ips
+        # return tenant_floating_ips
 
 
     def _get_ssh_session(self, vm_ip):
