@@ -13,7 +13,7 @@ LOG = logging.getLogger("scale_tester")
 
 DEFAULT_SUB_CMD = "cmds.traffic.IntraTenantPingTestCmd"
 
-MODULE_CLASS_REGEX = "(.*).(\w+)"
+MODULE_CLASS_REGEX = "(.+)\.(\w+)"
 
 class TrafficLauncherCmd(cmd.Command):
     """
@@ -84,6 +84,9 @@ class TrafficLauncherCmd(cmd.Command):
 
                     stack_name = "stack-" + tenant.name
 
+                    LOG.debug("self.cmd_context: %s, type: %s" % (self.cmd_context,
+                                                                  type(self.cmd_context)))
+
                     if "sub_cmd" in self.cmd_context:
                         sub_cmd = self.cmd_context["sub_cmd"]
                     else:
@@ -91,8 +94,8 @@ class TrafficLauncherCmd(cmd.Command):
                     
                     match_results = re.match(MODULE_CLASS_REGEX, sub_cmd)
                     
-                    module = importlib.import_module(match_results.group(0))
-                    class_obj = getattr(module,match_results.group(1))
+                    module = importlib.import_module(match_results.group(1))
+                    class_obj = getattr(module,match_results.group(2))
 
                     LOG.debug("module_path=%s" % module)
                     LOG.debug("class name = %s " % class_obj)
