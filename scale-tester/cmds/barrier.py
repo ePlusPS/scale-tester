@@ -19,7 +19,7 @@ class StackCreateBarrierCmd(cmd.Command):
                  'external_network'
                  'heat_hot_file'
         """
-        super(cmd.Command,self).__init__()
+        super(StackCreateBarrierCmd,self).__init__()
         self.context = cmd_context
         self.program = program
 

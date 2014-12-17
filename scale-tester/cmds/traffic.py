@@ -24,7 +24,7 @@ class TrafficLauncherCmd(cmd.Command):
         """
         constructor
         """
-        super(cmd.Command,self).__init__()
+        super(TrafficLauncherCmd,self).__init__()
         self.name = __name__ 
         self.program = program
         self.cmd_context = cmd_context
@@ -149,6 +149,8 @@ class IntraTenantPingTestCmd(cmd.Command):
         self.password = kwargs['password']
 
         self.results_dict = {}
+
+        self.threaded = True
 
 
     def init(self):

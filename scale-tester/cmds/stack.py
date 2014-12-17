@@ -67,7 +67,7 @@ class CreateStacksCmd(cmd.Command):
     """
     
     def __init__(self, cmd_context, program):
-        super(cmd.Command,self).__init__()
+        super(CreateStacksCmd,self).__init__()
         self.context = cmd_context
         self.program = program
 
@@ -166,7 +166,7 @@ class CreateStackCmd(cmd.Command):
                  'external_network'
                  'heat_hot_file'
         """
-        super(cmd.Command,self).__init__()
+        super(CreateStackCmd,self).__init__()
         self.context = cmd_context
         self.program = program
         
@@ -239,6 +239,7 @@ class CreateStackCmd(cmd.Command):
         """
         When invoked, will delete the stack created by this command
         """
+        # return cmd.SUCCESS 
         LOG.debug("undo")
         openstack_conf = self.program.context["openstack_conf"]
 

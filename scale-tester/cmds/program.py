@@ -5,6 +5,7 @@ from collections import deque
 import tenants
 import stack
 import importlib
+import threading
 
 LOG = logging.getLogger("scale_tester")
 
@@ -183,6 +184,8 @@ class ProgramRunner(object):
 
     def run(self):
         LOG.debug("ProgramRunner run started")
+
+        pending_threads = []
         while(True):
             
             if len(self.execution_queue) > 0:
@@ -195,7 +198,14 @@ class ProgramRunner(object):
                 # we can add status checks after each call to check
                 # whether the next step should be invoked or not
                 cmd.init()
-                cmd.execute()
+
+                if cmd.threaded is True:
+                    LOG.debug("Starting thread...")
+                    cmd_thread = threading.Thread(target=cmd.execute)
+                    cmd_thread.start()
+                    pending_threads.append(cmd_thread)
+                else:
+                    cmd.execute()
 
                 # if a cmd.done() indicates that it's not done, appendleft
                 # the current cmd
@@ -210,6 +220,9 @@ class ProgramRunner(object):
             else:
                 LOG.debug("No more commands")
                 break
+
+        for pending_thread in pending_threads:
+            pending_thread.join()
 
         # Clean up the results of a program/test run
         while (len(self.completed_commands)>0):

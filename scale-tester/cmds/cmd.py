@@ -59,7 +59,8 @@ class Command(object):
     def __init__(self,name=None, program=None):
         self.context = {}
         self.name = name
-        self.program = program 
+        self.program = program
+        self.threaded = False
 
     def init(self):
         """

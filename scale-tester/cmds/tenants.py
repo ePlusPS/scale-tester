@@ -19,7 +19,7 @@ class CreateTenantsCmd(cmd.Command):
         """
         constructor
         """
-        super(cmd.Command,self).__init__()
+        super(CreateTenantsCmd,self).__init__()
         self.context = cmd_context
         self.program = program
     
@@ -138,7 +138,7 @@ class CreateTenantAndUsers(cmd.Command):
         constructor
         kwargs: 'tenant_name', 'num_users'
         """
-        super(cmd.Command,self).__init__()
+        super(CreateTenantAndUsers,self).__init__()
         self.name = __name__ 
         self.context = cmd_context
         self.program = program
