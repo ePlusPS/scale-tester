@@ -11,8 +11,8 @@
             },
             "global_test_parameters" : {
                 "tenant_name_prefix": "tenant-test",
-                "num_of_tenants" : 1,
-                "num_users_per_tenant": 2,
+                "num_of_tenants" : 2,
+                "num_users_per_tenant": 1,
                 "num_networks_per_tenant" : 2,
                 "num_vms_per_network" : 2,
                 "ext_net":"10.1.10.0/24",
@@ -27,7 +27,7 @@
             {
                 "command_name" : "cmds.stack.CreateStacksCmd",
                 "context" : {
-                    "vm_image_id" : "355b3761-a8d3-4650-914e-ea72569346d9",
+                    "vm_image_id" : "3db57786-a193-4b29-8172-518d259939de",
                     "external_network" : "EXT1",
                     "external_network_id" : "12489859-b6f0-45cf-a502-fa981e26e6ac",
                     "heat_hot_file":"../doc/samples/heat/fip.yaml"
