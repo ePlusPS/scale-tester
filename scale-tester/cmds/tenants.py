@@ -180,6 +180,8 @@ class CreateTenantAndUsers(cmd.Command):
 
 
         # create the tenant/project
+        # perhaps at a later point, randomly create a suffix or prefix to
+        # append to a tenant and user name
         self.created_tenant = \
                         keystone_c.tenants.create(tenant_name=self.tenant_name,
                         description='scale test created',
@@ -236,6 +238,7 @@ class CreateTenantAndUsers(cmd.Command):
         LOG.debug("undo")
         
         # should just access some singleton for keystone
+        """
         keystone_c = \
             cmd.get_keystone_client(self.program)
 
@@ -246,5 +249,5 @@ class CreateTenantAndUsers(cmd.Command):
         for user in self.created_users:
             keystone_c.users.delete(user)
             LOG.info("deleted %s",str(user))
-
+        """
         return cmd.SUCCESS
