@@ -1,0 +1,48 @@
+{
+    "program" : {
+        "context" : {
+            "openstack_conf" : {
+                "openstack_project":"admin",
+                "openstack_user":"admin",
+                "openstack_password":"admin",
+                "openstack_auth_url":"http://172.29.68.11:5000/v2.0/",
+                "openstack_heat_url":"http://172.29.68.11:8004/v1/%s",
+                "openstack_heat_stack_owner_role":"heat_stack_owner"
+            },
+            "global_test_parameters" : {
+                "tenant_name_prefix": "tenant-test",
+                "num_of_tenants" : 1,
+                "num_users_per_tenant": 1,
+                "num_networks_per_tenant" : 3,
+                "num_vms_per_network" : 3,
+                "ext_net":"192.168.0.0/16",
+                "ext_net_gw":"192.168.0.1"
+            }
+        },
+        "commands" : [
+            {
+                "command_name" : "cmds.tenants.CreateTenantsCmd",
+                "context" : {}
+            },
+            {
+                "command_name" : "cmds.stack.CreateStacksCmd",
+                "context" : {
+                    "vm_image_id" : "52bf1790-7e0d-412e-8e3b-a651fc676425",
+                    "external_network" : "publicnet1",
+                    "external_network_id" : "bbfaffde-e6fd-400b-b28b-97908f5e5617",
+                    "heat_hot_file":"../doc/samples/heat/fip3.yaml"
+                }
+            },
+            {
+                "command_name" : "cmds.barrier.StackCreateBarrierCmd",
+                "context" : {}
+            },
+            {
+                "command_name" : "cmds.traffic.TrafficLauncherCmd",
+                "context" : {
+                    "sub_cmd" : "cmds.traffic.CrossTenantPingTestCmd"
+                }
+            }
+        ]
+    }
+}
