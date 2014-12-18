@@ -241,8 +241,6 @@ class CreateStackCmd(cmd.Command):
         """
         When invoked, will delete the stack created by this command
         """
-        # return cmd.SUCCESS 
-        pu.db
         LOG.debug("undo")
 
         if (self.tenant_heat_c is not None):
