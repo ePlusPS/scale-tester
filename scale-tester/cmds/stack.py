@@ -178,8 +178,10 @@ class CreateStackCmd(cmd.Command):
         self.external_network = kwargs['external_network']
         self.external_network_id = kwargs['external_network_id']
         self.heat_hot_file = kwargs['heat_hot_file']
-
-
+        
+        # keystone client session for the tenant / tenant-user
+        self.tenant_keystone_c = None
+        self.tenant_heat_c = None
 
     def init(self):
         # precondition, tenant and user exists
@@ -195,7 +197,7 @@ class CreateStackCmd(cmd.Command):
         
         openstack_conf = self.program.context["openstack_conf"]
 
-        keystone_c = \
+        self.tenant_keystone_c = \
          cmd.get_keystone_client_for_tenant_user(tenant_name=self.tenant_name,
                                   user_name=self.user_name,
                                   password=self.user_name,
@@ -204,12 +206,12 @@ class CreateStackCmd(cmd.Command):
 
         # assumming that we're using heat
         heat_url = openstack_conf['openstack_heat_url']
-        heat_url = heat_url % (keystone_c.auth_tenant_id)
+        heat_url = heat_url % (self.tenant_keystone_c.auth_tenant_id)
         
         LOG.debug("heat_url = %s" % (heat_url)) 
         
-        heat_c = heat_client.Client(heat_url,
-                                    token=keystone_c.auth_token)
+        self.tenant_heat_c = heat_client.Client(heat_url,
+                                    token=self.tenant_keystone_c.auth_token)
 
         LOG.debug("obtained heat client")
         self.stack_uuid = uuidutils.generate_uuid()
@@ -225,7 +227,7 @@ class CreateStackCmd(cmd.Command):
         LOG.debug("heat request dictionary generated")
         LOG.debug(pprint.pformat(heat_req))
 
-        resp = heat_c.stacks.create(**heat_req)
+        resp = self.tenant_heat_c.stacks.create(**heat_req)
 
         stack_response = resp['stack']
         self.stack_id = stack_response['id']
@@ -240,27 +242,11 @@ class CreateStackCmd(cmd.Command):
         When invoked, will delete the stack created by this command
         """
         # return cmd.SUCCESS 
+        pu.db
         LOG.debug("undo")
-        openstack_conf = self.program.context["openstack_conf"]
 
-        keystone_c = \
-         cmd.get_keystone_client_for_tenant_user(tenant_name=self.tenant_name,
-                                  user_name=self.user_name,
-                                  password=self.user_name,
-                                  auth_url=\
-                                  openstack_conf["openstack_auth_url"])
-
-        # assumming that we're using heat
-        heat_url = openstack_conf['openstack_heat_url']
-        heat_url = heat_url % (keystone_c.auth_tenant_id)
-        
-        LOG.debug("heat_url = %s" % (heat_url)) 
-        
-        heat_c = heat_client.Client(heat_url,
-                                    token=keystone_c.auth_token)
-
-        LOG.debug("obtained heat client")
-        LOG.debug("we will plan to delete stack-id %s" % (self.stack_id))
-        # heat_c.stacks.delete(self.stack_id)
+        if (self.tenant_heat_c is not None):
+            self.tenant_heat_c.stacks.delete(self.stack_id)
+            LOG.info("tenant stack (id=%s) deleted" % (self.stack_id))
 
         return cmd.SUCCESS

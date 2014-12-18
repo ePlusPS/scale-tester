@@ -220,7 +220,8 @@ class ProgramRunner(object):
             else:
                 LOG.debug("No more commands")
                 break
-
+        
+        # wait for threads to join
         for pending_thread in pending_threads:
             pending_thread.join()
 
