@@ -1,2 +1,6 @@
 pprint
 pudb
+paramiko
+python-neutronclient
+python-heatclient
+python-keystoneclient

@@ -82,7 +82,7 @@ class StackCreateBarrierCmd(cmd.Command):
                                                   password=stack_cmd.user_name,
                                                   tenant_name=stack_cmd.tenant_name)
 
-        heat_url = 'http://10.1.10.169:8004/v1/%s' % (keystone_session.auth_tenant_id) 
+        heat_url = heat_url % (keystone_session.auth_tenant_id) 
 
         heat_session = heat_client.Client(heat_url,
                                           token=keystone_session.auth_token)
