@@ -242,9 +242,9 @@ class CreateStackCmd(cmd.Command):
         When invoked, will delete the stack created by this command
         """
         LOG.debug("undo")
-
+	"""
         if (self.tenant_heat_c is not None):
             self.tenant_heat_c.stacks.delete(self.stack_id)
             LOG.info("tenant stack (id=%s) deleted" % (self.stack_id))
-
+        """
         return cmd.SUCCESS
