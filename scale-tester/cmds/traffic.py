@@ -192,10 +192,20 @@ class IntraTenantPingTestCmd(cmd.Command):
         # do all to all ping within tenant
         for src_ip in src_ip_list:
             self.results_dict[src_ip] = {}
-
             for dst_ip in dst_ip_list:
                 ssh_session = session_dict[src_ip]
-                result = self._trigger_ping(ssh_session, dst_ip)
+                rc = self._trigger_ping_async(ssh_session, dst_ip)
+                #self.results_dict[src_ip][dst_ip] = result
+
+        # let pings run, wait 25s
+        time.sleep(25)
+
+        # retrieve ping results
+        for src_ip in src_ip_list:
+            self.results_dict[src_ip] = {}
+            for dst_ip in dst_ip_list:
+                ssh_session = session_dict[src_ip]
+                result = self._get_ping_results(ssh_session, dst_ip)
                 self.results_dict[src_ip][dst_ip] = result
 
         for src_ip, results in self.results_dict.items():
@@ -358,6 +368,45 @@ class IntraTenantPingTestCmd(cmd.Command):
         return {"rc": rc,
                 "stdout": output_lines}
 
+    def _trigger_ping_async(self, ssh_session, dst_ip, count=10, interval=1):
+
+        cmd_str = "sh -c 'ping -c %s %s > %s.out; echo $? > %s.rc.out'" % (count, dst_ip, dst_ip, dst_ip)
+        LOG.debug("running command: %s" % (cmd_str))
+        
+        sin, sout, serr = ssh_session.exec_command(cmd_str, timeout=10)
+        rc = sout.channel.recv_exit_status()
+
+        LOG.debug("ping async rc: %s" % rc)
+
+        return rc
+
+    def _get_ping_results(self, ssh_session, dst_ip):
+
+        cmd_str = "cat %s.out" % (dst_ip)
+        LOG.debug("running command: %s" % (cmd_str))
+        
+        sin, sout, serr = ssh_session.exec_command(cmd_str, timeout=10)
+        rc = sout.channel.recv_exit_status()
+
+        output_lines = []
+        for line in sout.readlines():
+            LOG.debug("  %s" % line)
+            output_lines.append(line)
+
+        cmd_str = "cat %s.rc.out" % (dst_ip)
+        LOG.debug("running command: %s" % (cmd_str))
+        
+        sin, sout, serr = ssh_session.exec_command(cmd_str, timeout=10)
+        rc = sout.channel.recv_exit_status()
+
+        for line in sout.readlines():
+            LOG.debug("  %s" % line)
+            ping_rc = int(line)
+
+        LOG.debug("ping async rc: %s" % ping_rc)
+
+        return {"rc": ping_rc,
+                "stdout": output_lines}
 
 class CrossTenantPingTestCmd(IntraTenantPingTestCmd):
     
