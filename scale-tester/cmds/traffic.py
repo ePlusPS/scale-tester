@@ -209,7 +209,7 @@ class IntraTenantPingTestCmd(cmd.Command):
                 self.results_dict[src_ip][dst_ip] = result
 
         for src_ip, results in self.results_dict.items():
-            LOG.debug("Ping Result,  src_ip: %s,  results: %s" % (src_ip, results))
+            LOG.debug("Ping Result,  src_ip: %s,  results:\n%s" % (src_ip, results))
             ssh_session = session_dict[src_ip]
             ssh_session.close()
         
@@ -370,7 +370,7 @@ class IntraTenantPingTestCmd(cmd.Command):
 
     def _trigger_ping_async(self, ssh_session, dst_ip, count=10, interval=1):
 
-        cmd_str = "sh -c 'ping -c %s %s > %s.out; echo $? > %s.rc.out'" % (count, dst_ip, dst_ip, dst_ip)
+        cmd_str = "sh -c 'ping -c %s %s > %s.out; echo $? > %s.rc.out' &" % (count, dst_ip, dst_ip, dst_ip)
         LOG.debug("running command: %s" % (cmd_str))
         
         sin, sout, serr = ssh_session.exec_command(cmd_str, timeout=10)
@@ -407,6 +407,7 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         return {"rc": ping_rc,
                 "stdout": output_lines}
+
 
 class CrossTenantPingTestCmd(IntraTenantPingTestCmd):
     
