@@ -209,7 +209,7 @@ class IntraTenantPingTestCmd(cmd.Command):
                 self.results_dict[src_ip][dst_ip] = result
 
         for src_ip, results in self.results_dict.items():
-            LOG.debug("Ping Result,  src_ip: %s,  results:\n%s" % (src_ip, results))
+            LOG.debug("Ping Result,  src_ip: %s,  results:\n%s" % (src_ip, pprint.pformat(results)))
             ssh_session = session_dict[src_ip]
             ssh_session.close()
         
