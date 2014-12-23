@@ -169,13 +169,26 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         src_ip_list = self._get_src_ip_list()
         dst_ip_list = self._get_dst_ip_list()
-        
+        fail_ip_list = []
+
         pending_session_list = list(src_ip_list)
         session_dict = {}
 
         LOG.debug("Attempting to create SSH sessions...")
+        start_time = time.time()
 
         while len(pending_session_list) > 0:
+            cur_time = time.time()
+            time_delta = cur_time - start_time
+            
+            # allow 8 minutes for VMs to boot
+            if time_delta > 480: 
+                for vm_ip in pending_session_list:
+                    LOG.error("Could not open session to %s, timeout exceeded" % vm_ip)
+                    src_ip_list.remove(vm_ip)
+                    fail_ip_list.append(vm_ip)
+                break
+                
             for vm_ip in pending_session_list:
                 LOG.debug("Connecting to %s..." % vm_ip)
                 ssh_session = self._get_ssh_session(vm_ip)
@@ -212,6 +225,9 @@ class IntraTenantPingTestCmd(cmd.Command):
             LOG.debug("Ping Result,  src_ip: %s,  results:\n%s" % (src_ip, pprint.pformat(results)))
             ssh_session = session_dict[src_ip]
             ssh_session.close()
+
+        if len(fail_ip_list) > 0:
+            LOG.error("Failed IPs: %s" % pprint.pformat(fail_ip_list))
         
         return cmd.SUCCESS
 
