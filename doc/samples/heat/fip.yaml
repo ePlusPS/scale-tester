@@ -73,6 +73,7 @@ resources:
 
     floating_ip1:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: server1_port }
@@ -94,6 +95,7 @@ resources:
 
     floating_ip2:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: server2_port }

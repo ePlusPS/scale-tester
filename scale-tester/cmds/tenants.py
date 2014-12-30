@@ -238,7 +238,7 @@ class CreateTenantAndUsers(cmd.Command):
         LOG.debug("undo")
         
         # should just access some singleton for keystone
-        """
+        
         keystone_c = \
             cmd.get_keystone_client(self.program)
 
@@ -249,5 +249,5 @@ class CreateTenantAndUsers(cmd.Command):
         for user in self.created_users:
             keystone_c.users.delete(user)
             LOG.info("deleted %s",str(user))
-        """
+        
         return cmd.SUCCESS

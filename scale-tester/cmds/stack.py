@@ -7,6 +7,7 @@ import heatclient.v1.client as heat_client
 import heatclient.openstack.common.uuidutils as uuidutils
 import yaml
 import pudb
+import time
 
 LOG = logging.getLogger("scale_tester")
 
@@ -242,9 +243,20 @@ class CreateStackCmd(cmd.Command):
         When invoked, will delete the stack created by this command
         """
         LOG.debug("undo")
-	"""
+
+        #keystone_c = self.get_keystone_client(self.program)
+
+        #openstack_conf = self.program.context["openstack_conf"]
+        
+        #heat_c = 
+            
+	
         if (self.tenant_heat_c is not None):
             self.tenant_heat_c.stacks.delete(self.stack_id)
             LOG.info("tenant stack (id=%s) deleted" % (self.stack_id))
-        """
+
+        LOG.info("sleeping for 45s...")
+        time.sleep(45)
+        LOG.info("stack undo-phase sleep done")
+        
         return cmd.SUCCESS

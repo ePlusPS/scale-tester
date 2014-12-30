@@ -28,8 +28,8 @@
                 "command_name" : "cmds.stack.CreateStacksCmd",
                 "context" : {
                     "vm_image_id" : "3db57786-a193-4b29-8172-518d259939de",
-                    "external_network" : "EXT1",
-                    "external_network_id" : "12489859-b6f0-45cf-a502-fa981e26e6ac",
+                    "external_network" : "EX",
+                    "external_network_id" : "1e04dc1e-958b-4d11-b55f-51593c4606e3",
                     "heat_hot_file":"../doc/samples/heat/fip.yaml"
                 }
             },

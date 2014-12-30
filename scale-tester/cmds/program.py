@@ -233,7 +233,7 @@ class ProgramRunner(object):
 
         # Clean up the results of a program/test run
         while (len(self.completed_commands)>0):
-            executed_cmd = self.completed_commands.popleft()
+            executed_cmd = self.completed_commands.pop()
             executed_cmd.undo()
 
 
