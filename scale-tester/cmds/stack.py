@@ -4,6 +4,7 @@ import cmd
 import pprint
 import logging
 import heatclient.v1.client as heat_client
+import keystoneclient.v2_0.client as keystone_client
 import heatclient.openstack.common.uuidutils as uuidutils
 import yaml
 import pudb
@@ -149,6 +150,28 @@ def create_stack_cmd(tenant, user, parent_cmd_context, program):
     return create_stack_cmd_obj
     
 
+class UndoStackWaitCmd(cmd.Command):
+    def __init__(self, cmd_context, program, **kwargs):
+        super(UndoStackWaitCmd,self).__init__()
+
+    def init(self):
+        # precondition, tenant and user exists
+        # check that hot file key exists
+        LOG.debug("init")
+        LOG.debug(pprint.pformat(self.context))
+        return cmd.SUCCESS
+    
+    def execute(self):
+        return cmd.SUCCESS
+
+    def undo(self):
+        LOG.info("sleeping for 45s...")
+        time.sleep(45)
+        LOG.info("stack undo-phase sleep done")
+        return cmd.SUCCESS
+                
+    
+
 class CreateStackCmd(cmd.Command):
     """
     This cmd creates a OpenStack Heat Stack instance
@@ -243,20 +266,39 @@ class CreateStackCmd(cmd.Command):
         When invoked, will delete the stack created by this command
         """
         LOG.debug("undo")
+        
+        openstack_conf = self.program.context["openstack_conf"]
 
         #keystone_c = self.get_keystone_client(self.program)
-
-        #openstack_conf = self.program.context["openstack_conf"]
         
-        #heat_c = 
-            
+        #keystone_c = \
+        #             keystone_client.Client(username=openstack_conf['openstack_user'],
+        #                                    password=openstack_conf['openstack_password'],
+        #                                    tenant_name=openstack_conf['openstack_project'],
+        #                                    auth_url=openstack_conf['openstack_auth_url'])
+        keystone_c = cmd.get_keystone_client_for_tenant_user(tenant_name=self.tenant_name,
+                                                             user_name=self.user_name,
+                                                             password=self.user_name,
+                                                             auth_url=openstack_conf["openstack_auth_url"])
+        # assumming that we're using heat
+        heat_url = openstack_conf['openstack_heat_url']
+        heat_url = heat_url % (keystone_c.auth_tenant_id)
+        
+        LOG.debug("heat_url = %s" % (heat_url)) 
+        
+        heat_c = heat_client.Client(heat_url,
+                                    token=keystone_c.auth_token)
+        
+        self.tenant_heat_c = heat_c
+        
 	
         if (self.tenant_heat_c is not None):
             self.tenant_heat_c.stacks.delete(self.stack_id)
             LOG.info("tenant stack (id=%s) deleted" % (self.stack_id))
 
-        LOG.info("sleeping for 45s...")
-        time.sleep(45)
-        LOG.info("stack undo-phase sleep done")
+        
+        #LOG.info("sleeping for 45s...")
+        #time.sleep(45)
+        #LOG.info("stack undo-phase sleep done")
         
         return cmd.SUCCESS

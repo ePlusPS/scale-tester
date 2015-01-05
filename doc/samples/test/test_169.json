@@ -24,6 +24,10 @@
                 "command_name" : "cmds.tenants.CreateTenantsCmd",
                 "context" : {}
             },
+	    {
+                "command_name" : "cmds.stack.UndoStackWaitCmd",
+                "context" : {}
+            },
             {
                 "command_name" : "cmds.stack.CreateStacksCmd",
                 "context" : {
