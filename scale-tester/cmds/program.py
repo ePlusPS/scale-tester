@@ -138,6 +138,7 @@ class Program(object):
         self.commands = deque()
         self.context = {}
         self.name = None
+        self.failed = False
         
         # tracks created openstack resource objects
         resources = Resources()
@@ -159,7 +160,6 @@ class ProgramRunner(object):
         self.execution_queue= deque()
         self.program = None
         self.completed_commands = deque()
-        self.failed = False
 
         # self.is_test_mode = True
 
