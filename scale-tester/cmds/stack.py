@@ -206,6 +206,7 @@ class CreateStackCmd(cmd.Command):
         # keystone client session for the tenant / tenant-user
         self.tenant_keystone_c = None
         self.tenant_heat_c = None
+        self.rollback_started = False
 
     def init(self):
         # precondition, tenant and user exists
@@ -265,6 +266,11 @@ class CreateStackCmd(cmd.Command):
         """
         When invoked, will delete the stack created by this command
         """
+        if self.rollback_started is True:
+            LOG.info("rollback already started for stack %s,%s, skip undo" % (self.stack_name,
+                                                                              self.stack_id))
+            return cmd.SUCCESS
+
         LOG.debug("undo")
         
         openstack_conf = self.program.context["openstack_conf"]
@@ -293,9 +299,11 @@ class CreateStackCmd(cmd.Command):
         
 	
         if (self.tenant_heat_c is not None):
-            self.tenant_heat_c.stacks.delete(self.stack_id)
-            LOG.info("tenant stack (id=%s) deleted" % (self.stack_id))
-
+            try:
+                self.tenant_heat_c.stacks.delete(self.stack_id)
+                LOG.info("tenant stack (id=%s) deleted" % (self.stack_id))
+            except Exception:
+                LOG.error("Exception while deleting stack %s" % self.stack_id)
         
         #LOG.info("sleeping for 45s...")
         #time.sleep(45)

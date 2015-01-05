@@ -44,7 +44,22 @@ class StackCreateBarrierCmd(cmd.Command):
 
         while len(pending_stacks) > 0:
             for stack_cmd in pending_stacks:
-                stack_status = self._get_stack(stack_cmd.heat_session, stack_cmd.stack_name)                
+                stack_status = self._get_stack(stack_cmd.heat_session, stack_cmd.stack_name)
+
+                if stack_status is None:
+                    LOG.error("Stack for stack_cmd %s not found, will abort test" % stack_cmd.stack_name)
+                    self.program.failed = True
+                    stack_cmd.rollback_started = True
+
+                if(stack_status.stack_status == "ROLLBACK_IN_PROGRESS"):
+                    LOG.error("Stack for stack_cmd %s doing rollback, will abort test" % stack_cmd.stack_name)
+                    self.program.failed = True
+                    stack_cmd.rollback_started = True
+
+                if stack_cmd.rollback_started is True:
+                    pending_stacks.remove(stack_cmd)
+                    done_stacks.append(stack_cmd)
+
                 if(stack_status.stack_status == "CREATE_COMPLETE"):
                     pending_stacks.remove(stack_cmd)
                     done_stacks.append(stack_cmd)

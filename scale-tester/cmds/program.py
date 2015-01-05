@@ -158,7 +158,8 @@ class ProgramRunner(object):
         """
         self.execution_queue= deque()
         self.program = None
-        self.completed_commands = deque() 
+        self.completed_commands = deque()
+        self.failed = False
 
         # self.is_test_mode = True
 

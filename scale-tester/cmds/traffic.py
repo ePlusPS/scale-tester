@@ -164,6 +164,9 @@ class IntraTenantPingTestCmd(cmd.Command):
         When this command is executed, it will run a ping command on a VM, targeting the dest IP.
         """
         LOG.debug("execute")
+        if self.program.failed is True:
+            LOG.error("Skipping traffic test, program failed")
+            return cmd.SUCCESS
                 
         self._setup_tenant()
 
@@ -176,13 +179,17 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         LOG.debug("Attempting to create SSH sessions...")
         start_time = time.time()
+        
+        first_vm_up = False
+        time_to_wait = 300
+        time_to_wait_vm_up = 90
 
         while len(pending_session_list) > 0:
             cur_time = time.time()
             time_delta = cur_time - start_time
             
-            # allow 8 minutes for VMs to boot
-            if time_delta > 480: 
+            # allow 5 minutes for VMs to boot, or 90s after first VM is successfully connected
+            if time_delta > time_to_wait: 
                 for vm_ip in pending_session_list:
                     LOG.error("Could not open session to %s, timeout exceeded" % vm_ip)
                     src_ip_list.remove(vm_ip)
@@ -196,6 +203,9 @@ class IntraTenantPingTestCmd(cmd.Command):
                     pending_session_list.remove(vm_ip)
                     session_dict[vm_ip] = ssh_session
                     LOG.debug("Connection success")
+                    #if not first_vm_up:
+                    #    first_vm_up = True
+                    #    time_to_wait = time_to_wait_vm_up
                 else:
                     LOG.debug("Connection failed.")
 
