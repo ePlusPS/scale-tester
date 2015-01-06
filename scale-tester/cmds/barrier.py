@@ -55,6 +55,12 @@ class StackCreateBarrierCmd(cmd.Command):
                     LOG.error("Stack for stack_cmd %s doing rollback, will abort test" % stack_cmd.stack_name)
                     self.program.failed = True
                     stack_cmd.rollback_started = True
+                
+                if(stack_status.stack_status == "ROLLBACK_FAILED"):
+                    LOG.error("Stack rollback failed for stack_cmd %s" % stack_cmd.stack_name)
+                    self.program.failed = True
+                    pending_stacks.remove(stack_cmd)
+                    done_stacks.append(stack_cmd)
 
                 if stack_cmd.rollback_started is True:
                     pending_stacks.remove(stack_cmd)
