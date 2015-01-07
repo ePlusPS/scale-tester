@@ -442,9 +442,9 @@ class IntraTenantPingTestCmd(cmd.Command):
 
 
 class CrossTenantPingTestCmd(IntraTenantPingTestCmd):
-"""
-This class is responsible for pinging vms in another tenant (network).
-"""
+    """
+    This class is responsible for pinging vms in another tenant (network).
+    """
     def _get_dst_ip_list(self):
         resources = self.program.context['program.resources']
         tenant_floating_ips = []
