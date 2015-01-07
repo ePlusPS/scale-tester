@@ -38,7 +38,10 @@ class TrafficLauncherCmd(cmd.Command):
 
 
     def _get_ips_for_tenant(self, tenant, user):
-        # retrieve set of IPs for this tenant
+        """
+        For a given tenant, retrieve the tenants list of floating IPs
+        corresponding to VMs
+        """
 
         openstack_conf = self.program.context["openstack_conf"]
         auth_url = openstack_conf["openstack_auth_url"]
@@ -87,6 +90,8 @@ class TrafficLauncherCmd(cmd.Command):
                     LOG.debug("self.cmd_context: %s, type: %s" % (self.cmd_context,
                                                                   type(self.cmd_context)))
 
+
+                    # Check if a sub_cmd was set in the cmd context
                     if "sub_cmd" in self.cmd_context:
                         sub_cmd = self.cmd_context["sub_cmd"]
                     else:
@@ -99,7 +104,8 @@ class TrafficLauncherCmd(cmd.Command):
 
                     LOG.debug("module_path=%s" % module)
                     LOG.debug("class name = %s " % class_obj)
-
+                    
+                    # dynamically instantiate a traffic sub-command object
                     intra_ping_cmd_obj = class_obj(self.cmd_context,
                                                    self.program,
                                                    stack_name=stack_name,
@@ -436,7 +442,9 @@ class IntraTenantPingTestCmd(cmd.Command):
 
 
 class CrossTenantPingTestCmd(IntraTenantPingTestCmd):
-    
+"""
+This class is responsible for pinging vms in another tenant (network).
+"""
     def _get_dst_ip_list(self):
         resources = self.program.context['program.resources']
         tenant_floating_ips = []
