@@ -104,6 +104,7 @@ resources:
 
     net_1_floating_ip1:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface_1
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: net_1_server1_port }
@@ -124,6 +125,7 @@ resources:
 
     net_1_floating_ip2:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface_1
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: net_1_server2_port }
@@ -144,6 +146,7 @@ resources:
 
     net_1_floating_ip3:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface_1
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: net_1_server3_port }
@@ -165,6 +168,7 @@ resources:
 
     net_2_floating_ip1:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface_2
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: net_2_server1_port }
@@ -185,6 +189,7 @@ resources:
 
     net_2_floating_ip2:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface_2
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: net_2_server2_port }
@@ -205,6 +210,7 @@ resources:
 
     net_2_floating_ip3:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface_2
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: net_2_server3_port }
@@ -226,6 +232,7 @@ resources:
 
     net_3_floating_ip1:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface_3
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: net_3_server1_port }
@@ -246,6 +253,7 @@ resources:
 
     net_3_floating_ip2:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface_3
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: net_3_server2_port }
@@ -266,6 +274,7 @@ resources:
 
     net_3_floating_ip3:
         type: OS::Neutron::FloatingIP
+        depends_on: router1_interface_3
         properties:
             floating_network_id: { get_param: public_net_id }
             port_id: { get_resource: net_3_server3_port }
