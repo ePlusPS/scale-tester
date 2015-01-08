@@ -187,8 +187,8 @@ class IntraTenantPingTestCmd(cmd.Command):
         start_time = time.time()
         
         first_vm_up = False
-        time_to_wait = 300
-        time_to_wait_vm_up = 90
+        time_to_wait = 480
+        time_to_wait_vm_up = 119
 
         while len(pending_session_list) > 0:
             cur_time = time.time()
@@ -244,7 +244,8 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         if len(fail_ip_list) > 0:
             LOG.error("Failed IPs: %s" % pprint.pformat(fail_ip_list))
-        
+        LOG.info("Sleeping for 240s...")
+	time.sleep(240) 
         return cmd.SUCCESS
 
     def done(self):

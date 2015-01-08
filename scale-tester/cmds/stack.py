@@ -260,6 +260,9 @@ class CreateStackCmd(cmd.Command):
         LOG.info("Stack: %s, tenant: %s, user %s executed" % \
               (self.stack_name, self.tenant_name, self.user_name))
 
+        LOG.info("Sleeping before going to next command")
+        time.sleep(10)
+
         return cmd.SUCCESS
 
     def undo(self):
