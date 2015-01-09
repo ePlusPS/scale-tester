@@ -219,6 +219,9 @@ class CreateStackCmd(cmd.Command):
         """
         connect as tenant user and obtain keystone handle
         """
+        if self.program.failed:
+            self.rollback_started = True
+            return cmd.SUCCESS
         
         openstack_conf = self.program.context["openstack_conf"]
 
