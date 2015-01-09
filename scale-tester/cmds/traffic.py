@@ -237,15 +237,22 @@ class IntraTenantPingTestCmd(cmd.Command):
                 result = self._get_ping_results(ssh_session, dst_ip)
                 self.results_dict[src_ip][dst_ip] = result
 
+        ping_fail_pairs = []
         for src_ip, results in self.results_dict.items():
             LOG.debug("Ping Result,  src_ip: %s,  results:\n%s" % (src_ip, pprint.pformat(results)))
+            for dst_ip, result in results.items():
+                if result['rc'] < 0:
+                    ping_fail_pairs.append([src_ip, dst_ip])
             ssh_session = session_dict[src_ip]
             ssh_session.close()
 
         if len(fail_ip_list) > 0:
             LOG.error("Failed IPs: %s" % pprint.pformat(fail_ip_list))
-        LOG.info("Sleeping for 240s...")
-	time.sleep(240) 
+          
+        if len(ping_fail_pairs) > 0:
+            LOG.error("Failed Ping Pairs: %s" % pprint.pformat(ping_fail_pairs)) 
+        LOG.info("Sleeping for 180s...")
+	time.sleep(180) 
         return cmd.SUCCESS
 
     def done(self):
@@ -416,27 +423,27 @@ class IntraTenantPingTestCmd(cmd.Command):
     def _get_ping_results(self, ssh_session, dst_ip):
 
         cmd_str = "cat %s.out" % (dst_ip)
-        LOG.debug("running command: %s" % (cmd_str))
+        #LOG.debug("running command: %s" % (cmd_str))
         
         sin, sout, serr = ssh_session.exec_command(cmd_str, timeout=10)
         rc = sout.channel.recv_exit_status()
 
         output_lines = []
         for line in sout.readlines():
-            LOG.debug("  %s" % line)
+            #LOG.debug("  %s" % line)
             output_lines.append(line)
 
         cmd_str = "cat %s.rc.out" % (dst_ip)
-        LOG.debug("running command: %s" % (cmd_str))
+        #LOG.debug("running command: %s" % (cmd_str))
         
         sin, sout, serr = ssh_session.exec_command(cmd_str, timeout=10)
         rc = sout.channel.recv_exit_status()
 
         for line in sout.readlines():
-            LOG.debug("  %s" % line)
+            #LOG.debug("  %s" % line)
             ping_rc = int(line)
 
-        LOG.debug("ping async rc: %s" % ping_rc)
+        #LOG.debug("ping async rc: %s" % ping_rc)
 
         return {"rc": ping_rc,
                 "stdout": output_lines}
