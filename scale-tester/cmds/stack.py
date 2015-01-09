@@ -260,8 +260,41 @@ class CreateStackCmd(cmd.Command):
         LOG.info("Stack: %s, tenant: %s, user %s executed" % \
               (self.stack_name, self.tenant_name, self.user_name))
 
-        LOG.info("Sleeping before going to next command")
-        time.sleep(10)
+        #LOG.info("Sleeping before going to next command")
+        #time.sleep(10)
+        
+        # Poll for stack status, proceed when stack create is finished
+        LOG.info("Polling stack status for 180s...")
+        time_limit = 180
+        start_time = time.time()
+        cur_time = time.time()
+        while cur_time - start_time < time_limit:
+            cur_time = time.time()
+            stack_status = self._get_stack(self.tenant_heat_c, self.stack_name)
+            if stack_status is None:
+                LOG.error("Stack for stack_cmd %s not found, will abort test" % self.stack_name)
+                self.program.failed = True
+                self.rollback_started = True
+
+            if(stack_status.stack_status == "ROLLBACK_IN_PROGRESS"):
+                LOG.error("Stack for stack_cmd %s doing rollback, will abort test" % self.stack_name)
+                self.program.failed = True
+                self.rollback_started = True
+                
+            if(stack_status.stack_status == "ROLLBACK_FAILED"):
+                LOG.error("Stack rollback failed for stack_cmd %s" % self.stack_name)
+                self.program.failed = True
+                break
+
+            if self.rollback_started is True:
+                break
+
+            if(stack_status.stack_status == "CREATE_COMPLETE"):
+                break
+        
+        if cur_time - start_time > time_limit:
+            LOG.error("Could not create stack within 180s, aborting test")
+            self.program.failed = True
 
         return cmd.SUCCESS
 
@@ -313,3 +346,14 @@ class CreateStackCmd(cmd.Command):
         #LOG.info("stack undo-phase sleep done")
         
         return cmd.SUCCESS
+
+
+
+    def _get_stack(self, heat_session, stack_name):
+        filter = {"name": stack_name}
+        stack_list = heat_session.stacks.list(filters=filter)
+        for stack_item in stack_list:
+            LOG.debug("stack status: %s" % stack_item)
+            LOG.debug("   stack_id: %s" % stack_item.id)
+            stack_id = stack_item.id
+            return stack_item
