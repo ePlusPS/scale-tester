@@ -468,7 +468,7 @@ class SingleDestPingTestCmd(IntraTenantPingTestCmd):
     This class is responsible for pinging vms in another tenant (network).
     """
     def _get_dst_ip_list(self):
-        return ["172.29.68.15"]
+        return ["192.168.250.250"]
 
 def main():
     ping_tester = TrafficLauncherCommand(None)

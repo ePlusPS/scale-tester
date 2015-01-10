@@ -11,7 +11,7 @@
             },
             "global_test_parameters" : {
                 "tenant_name_prefix": "tenant-test",
-                "num_of_tenants" : 3,
+                "num_of_tenants" : 16,
                 "num_users_per_tenant": 1,
                 "num_networks_per_tenant" : 3,
                 "num_vms_per_network" : 3,
@@ -38,13 +38,9 @@
                 }
             },
             {
-                "command_name" : "cmds.barrier.StackCreateBarrierCmd",
-                "context" : {}
-            },
-            {
                 "command_name" : "cmds.traffic.TrafficLauncherCmd",
                 "context" : {
-                    "sub_cmd" : "cmds.traffic.CrossTenantPingTestCmd"
+                    "sub_cmd" : "cmds.traffic.SingleDestPingTestCmd"
                 }
             }
         ]
