@@ -330,7 +330,7 @@ def generate_hot_template():
             add_resource_property(resources,server_name,'name',server_name)
             add_resource_property(resources,server_name,'image',{'get_param':image_id_param_name})
             add_resource_property(resources,server_name,'flavor','m1.tiny')
-            add_resource_property(resources,server_name,'networks',{'ports':{'get_resource':server_port_name}})
+            add_resource_property(resources,server_name,'networks',[{'ports':{'get_resource':server_port_name}}])
             
             # create port for server in the network
             server_port_resource = create_resource('OS::Neutron::Port')
