@@ -44,7 +44,7 @@ def parse_args():
                         help='number of vms per network')
 
     parser.add_argument('yaml',
-                        help='yaml file')
+                        help='yaml output file name')
                         
     args = parser.parse_args()
 
@@ -55,6 +55,7 @@ def parse_args():
     
     app_context['num_networks'] = num_networks
     app_context['num_vms'] = num_vms
+    app_context['yaml_output_file'] = args.yaml
 
     LOG.debug("num_networks = %d, num vms = %d" % (app_context['num_networks'],
                                                    app_context['num_vms']))
@@ -218,10 +219,159 @@ def add_resource_depends(resources, resource_name, dependency_value):
                   (dependency_value, resource_name))
     else:
         LOG.debug("Could not find resource %s in resources" % (resource_name))
+
+def generate_hot_template():
+    """
+    Based on the input parameters, dynamically generate the hot template file
+    
+    num_networks
+    num_vms - if num_vms == 0, then floating-ips will not be generated
+
+    assumes 
+
+    * image_id
+    * public_net
+    * public_net_id
+    """
+
+    num_networks = app_context['num_networks']
+    num_vms_per_network = app_context['num_vms']
+    
+    description = "HOT template file for %d networks each having %d vms" % \
+                  (num_networks, num_vms_per_network)
+
+    hot_yaml = create_yaml_template(description)
+
+    # generate resources
+    resources = hot_yaml['resources']
+    parameters = hot_yaml['parameters']
+    outputs = hot_yaml['outputs']
+
+    # boiler-plate stuff
+    network_prefix = "net"
+    subnet_prefix = "subnet"
+    router_interface_prefix = "%s_interface_%d"
+
+    server_name_template = "%s_server_%d"
+    server_network_port_name_template = "%s_server_%d_port"
+
+    # example net_1_server_0_floating_ip
+    floating_ip_name_template = "%s_floating_ip"
+
+    # if num_networks = 2, then we should expect to see subnets created for
+    # 13.13.13.0/24, 14.14.14.0/24
+    base_subnet_octet = 13
+
+
+    # router resource setup
+    router_id = "router1"
+
+    # input parameter keys
+    public_net_param_name= "public_net"
+    
+    public_net_param = create_input_parameter('public network name','string')
+    add_input_parameter(parameters, public_net_param_name, public_net_param)
+
+    public_net_id_param_name = "public_net_id"
+    public_net_id_param = create_input_parameter('public network id','string')
+    add_input_parameter(parameters,public_net_id_param_name, public_net_id_param)
+    
+    image_id_param_name = "image_id"
+    image_id_param = create_input_parameter('Image Name','string')
+    add_input_parameter(parameters,image_id_param_name, image_id_param)
+
+    # resources
+    router_resource = create_resource('OS::Neutron::Router')
+    add_resource(resources,router_id,router_resource)
+    add_resource_property(resources,router_id,'external_gateway_info',{'network':{'get_param':public_net_param_name}})
+
+    for n in range(0,num_networks):
+        network_name = "%s_%d" % (network_prefix, n)
+        LOG.debug("network %d, name = %s" % (n,network_name))
+        
+        # create network resource
+        network_resource = create_resource('OS::Neutron::Net')
+        add_resource(resources,network_name,network_resource)
+        add_resource_property(resources,network_name,'name',network_name)
+
+        # create a subnet associated with the network resource
+        subnet_name = "%s_%d" % (subnet_prefix, n)
+        subnet_resource = create_resource('OS::Neutron::Subnet')
+        
+        add_resource(resources,subnet_name,subnet_resource)
+        add_resource_property(resources,subnet_name,'network_id',{'get_resource':network_name})
+        
+        subnet_cidr_octet = base_subnet_octet + n
+        subnet_cidr = "%d.%d.%d.0/24" % (subnet_cidr_octet, subnet_cidr_octet, subnet_cidr_octet)
+        subnet_gateway = "%d.%d.%d.1" % (subnet_cidr_octet, subnet_cidr_octet, subnet_cidr_octet)
+
+        add_resource_property(resources,subnet_name,'cidr',subnet_cidr)
+        add_resource_property(resources,subnet_name,'gateway_ip',subnet_gateway)
+
+        # attach network/subnet to router
+        router_interface_name = router_interface_prefix % (router_id,n)
+        router_interface_resource = \
+            create_resource('OS::Neutron::RouterInterface')
+        
+        add_resource(resources, router_interface_name,router_interface_resource)
+        add_resource_property(resources,router_interface_name,'router_id',{'get_resource':router_id})
+        add_resource_property(resources,router_interface_name,'subnet_id',{'get_resource':subnet_name})
+
+        # handle server for each network 
+        for vm_index in range (0,num_vms_per_network):
+            # create server
+            server_name = server_name_template % (network_name,vm_index)
+            server_port_name = server_network_port_name_template % \
+                                (network_name, vm_index)
             
+            server_resource = create_resource('OS::Neutron::Server')
+
+            add_resource(resources,server_name,server_resource)
+            add_resource_property(resources,server_name,'name',server_name)
+            add_resource_property(resources,server_name,'image',{'get_param':image_id_param_name})
+            add_resource_property(resources,server_name,'flavor','m1.tiny')
+            add_resource_property(resources,server_name,'networks',{'ports':{'get_resource':server_port_name}})
+            
+            # create port for server in the network
+            server_port_resource = create_resource('OS::Neutron::Port')
+            add_resource(resources,server_port_name,server_port_resource)
+            add_resource_property(resources,server_port_name,'network_id',{'get_resources':network_name})
+
+            # create floating ip for server
+            floating_ip_resource = create_resource('OS::Neutron::FloatingIP')
+            floating_ip_name = floating_ip_name_template % \
+                               (server_name)
+
+            add_resource(resources,floating_ip_name,floating_ip_resource)
+            add_resource_depends(resources,floating_ip_name,router_interface_name)
+            add_resource_property(resources,floating_ip_name,'floating_network_id',{'get_param':public_net_id_param_name})
+            add_resource_property(resources,floating_ip_name,'port_id',{'get_resource':server_port_name})
+
+            # create output parameter for the vm
+            output_param_name = "%s_private_ip" % (server_name)
+
+            output_param_description = "private ip address of %s" % \
+                                       (server_name)
+
+            server_output_param = create_output_parameter(output_param_description,
+                                    {'get_attr': [server_name,'first_address']})
+
+            add_output_parameter(outputs,output_param_name,server_output_param)
+
+    LOG.debug("%s" % (pprint.pformat(hot_yaml)))
+    
+    # write the dictionary form of the yaml to an actual yaml file
+    LOG.debug("output file = %s" % (app_context['yaml_output_file']))
+
+    yaml_output_stream = open(app_context['yaml_output_file'],mode='w')
+    
+    yaml.dump(hot_yaml,yaml_output_stream)
+    
+
 def main():
     parse_args()
-    test_hot_template_api()
+    generate_hot_template()
+    # test_hot_template_api()
 
 def test_hot_template_api():
 
