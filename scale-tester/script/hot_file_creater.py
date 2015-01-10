@@ -119,7 +119,7 @@ def create_input_parameter(description,parameter_type):
 
     input_param = {}
     input_param['description'] = description
-    input_param['parameter_type'] = parameter_type
+    input_param['type'] = parameter_type
     return input_param
 
 def add_input_parameter(parameters,input_param_name, input_param_value):
