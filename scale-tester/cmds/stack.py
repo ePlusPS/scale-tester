@@ -272,6 +272,7 @@ class CreateStackCmd(cmd.Command):
         start_time = time.time()
         cur_time = time.time()
         while cur_time - start_time < time_limit:
+            time.sleep(5)
             cur_time = time.time()
             stack_status = self._get_stack(self.tenant_heat_c, self.stack_name)
             if stack_status is None:
