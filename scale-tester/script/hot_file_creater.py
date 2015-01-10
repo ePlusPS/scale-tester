@@ -324,7 +324,7 @@ def generate_hot_template():
             server_port_name = server_network_port_name_template % \
                                 (network_name, vm_index)
             
-            server_resource = create_resource('OS::Neutron::Server')
+            server_resource = create_resource('OS::Nova::Server')
 
             add_resource(resources,server_name,server_resource)
             add_resource_property(resources,server_name,'name',server_name)
