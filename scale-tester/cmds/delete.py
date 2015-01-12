@@ -72,10 +72,33 @@ class DeleteStacksCmd(cmd.Command):
                 for stack in stack_list:
                     LOG.info("    DELETE STACK: %s" % stack)
                     
+                    try:
+                        user_heat_c.stacks.delete(stack.id)
+                        LOG.info("tenant stack (id=%s) deleted" % (stack.id))
+                    except Exception:
+                        LOG.error("Exception while deleting stack %s" % stack.id)
                 
-
-
+                    time_limit = 60
+                    start_time = time.time()
+                    cur_time = time.time()
+                    while cur_time - start_time < time_limit:
+                        time.sleep(5)
+                        cur_time = time.time()
+                        
+                        stack_status = _get_stack(user_heat_c, stack.stack_name)
+                        LOG.info("        STACK STATUS: %s" % stack_status)
+                    
+                    
         return cmd.SUCCESS
 
     def undo(self):
         return cmd.SUCCESS
+
+
+def _get_stack(self, heat_session, stack_name):
+    filter = {"name": stack_name}
+    stack_list = heat_session.stacks.list(filters=filter)
+    for stack_item in stack_list:
+        LOG.debug("stack status: %s" % stack_item)
+        LOG.debug("   stack_id: %s" % stack_item.id)
+        return stack_item
