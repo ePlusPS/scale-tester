@@ -39,7 +39,12 @@ LOG.addHandler(fh2)
 def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
 
-    
+    parser.add_argument("-d",
+                        action='store_true',
+                        default=False,
+                        dest='is_delete',
+                        help='delete all stacks in the deployment specified in input file')
+
     parser.add_argument("test_input_file",
                         help='file path for the test template file')
     
@@ -67,6 +72,8 @@ def main():
     parsed_args = parse_args()
 
     print(parsed_args.test_input_file)
+    if parsed_args.is_delete == True:
+        print("Running in delete mode...")
 
     test_configuration = process_test_input_file(parsed_args)
     program = cmd_program.parse_program(test_configuration)
