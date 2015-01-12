@@ -7,6 +7,7 @@ import stack
 import importlib
 import threading
 import traceback
+import delete
 
 LOG = logging.getLogger("scale_tester")
 
@@ -175,7 +176,11 @@ class ProgramRunner(object):
         self.program.context['program_runner'] = self
         
         # pop the first command from the program
-        cmd = self.program.commands.popleft()
+        if program.is_delete:
+            cmd = delete.DeleteStacksCmd(None, self.program)
+            program.commands = deque() # ignore other commands
+        else:
+            cmd = self.program.commands.popleft()
 
         self.execution_queue.append(cmd)
     
