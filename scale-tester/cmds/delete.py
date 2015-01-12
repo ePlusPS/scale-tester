@@ -6,7 +6,11 @@ import keystoneclient.v2_0.client as keystone_client
 import heatclient.openstack.common.uuidutils as uuidutils
 import yaml
 import time
+import re
 
+LOG = logging.getLogger("scale_tester")
+
+TENANT_NAME_REGEX = "tenant-test-.*"
 
 class DeleteStacksCmd(cmd.Command):
     """
@@ -37,19 +41,21 @@ class DeleteStacksCmd(cmd.Command):
 
         for tenant in tenant_list:
 
-            print("DELETE TENANT: %s" % (tenant))
+            if re.match(TENANT_NAME_REGEX,tenant.name) != None:
+                LOG.info("DELETE TENANT: %s" % (tenant))
 
-            user_list = admin_keystone_c.tenants.list_users(tenant)
-            for user in user_list:
-                print("    DELETE USER: %s" % (user))
+                user_list = admin_keystone_c.tenants.list_users(tenant)
+                for user in user_list:
+                    if user.name != "admin":
+                        LOG.info("    DELETE USER: %s" % (user))
 
-            heat_url = openstack_conf['openstack_heat_url']
-            #heat_url = heat_url % (self.tenant_keystone_c.auth_tenant_id)
-        
-            #LOG.debug("heat_url = %s" % (heat_url)) 
-        
-            #self.tenant_heat_c = heat_client.Client(heat_url,
-            #                                        token=self.admin_keystone_c.auth_token)
+                    heat_url = openstack_conf['openstack_heat_url']
+                    #heat_url = heat_url % (self.tenant_keystone_c.auth_tenant_id)
+                    
+                    #LOG.debug("heat_url = %s" % (heat_url)) 
+                    
+                    #self.tenant_heat_c = heat_client.Client(heat_url,
+                    #                                        token=self.admin_keystone_c.auth_token)
 
         return cmd.SUCCESS
 
