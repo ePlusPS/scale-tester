@@ -35,6 +35,8 @@ class DeleteStacksCmd(cmd.Command):
     def execute(self):
         
         openstack_conf = self.program.context["openstack_conf"]
+        auth_url = openstack_conf["openstack_auth_url"]
+        heat_url = openstack_conf['openstack_heat_url']
 
         admin_keystone_c = cmd.get_keystone_client(self.program)
         tenant_list = admin_keystone_c.tenants.list()
@@ -45,17 +47,33 @@ class DeleteStacksCmd(cmd.Command):
                 LOG.info("DELETE TENANT: %s" % (tenant))
 
                 user_list = admin_keystone_c.tenants.list_users(tenant)
+                username = None
                 for user in user_list:
                     if user.name != "admin":
                         LOG.info("    DELETE USER: %s" % (user))
+                        username = user.name
 
-                    heat_url = openstack_conf['openstack_heat_url']
-                    #heat_url = heat_url % (self.tenant_keystone_c.auth_tenant_id)
+                if username == None:
+                    continue
+
+                user_keystone_c = keystone_client.Client(auth_url=auth_url,
+                                                         username=username,
+                                                         password=username,
+                                                         tenant_name=tenant.name)
+
+                user_heat_url = heat_url % (user_keystone_c.auth_tenant_id)
+                
+                LOG.info("user_heat_url = %s" % (user_heat_url)) 
+                
+                user_heat_c = heat_client.Client(user_heat_url,
+                                                 token=user_keystone_c.auth_token)
+                
+                stack_list = user_heat_c.stacks.list()
+                for stack in stack_list:
+                    LOG.info("    DELETE STACK: %s" % stack)
                     
-                    #LOG.debug("heat_url = %s" % (heat_url)) 
-                    
-                    #self.tenant_heat_c = heat_client.Client(heat_url,
-                    #                                        token=self.admin_keystone_c.auth_token)
+                
+
 
         return cmd.SUCCESS
 
