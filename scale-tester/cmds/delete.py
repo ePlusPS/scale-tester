@@ -95,7 +95,7 @@ class DeleteStacksCmd(cmd.Command):
         return cmd.SUCCESS
 
 
-def _get_stack(self, heat_session, stack_name):
+def _get_stack(heat_session, stack_name):
     filter = {"name": stack_name}
     stack_list = heat_session.stacks.list(filters=filter)
     for stack_item in stack_list:
