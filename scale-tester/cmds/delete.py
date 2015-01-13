@@ -99,6 +99,7 @@ class DeleteStacksCmd(cmd.Command):
                         LOG.info("deleted user %s",str(user))
 
                 admin_keystone_c.tenants.delete(tenant)
+                LOG.info("deleted tenant %s" % tenant)
                     
         return cmd.SUCCESS
 
