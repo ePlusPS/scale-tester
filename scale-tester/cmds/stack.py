@@ -165,8 +165,8 @@ class UndoStackWaitCmd(cmd.Command):
         return cmd.SUCCESS
 
     def undo(self):
-        LOG.info("sleeping for 45s...")
-        time.sleep(45)
+        #LOG.info("sleeping for 45s...")
+        #time.sleep(45)
         LOG.info("stack undo-phase sleep done")
         return cmd.SUCCESS
                 
@@ -298,6 +298,7 @@ class CreateStackCmd(cmd.Command):
         
         if cur_time - start_time > time_limit:
             LOG.error("Could not create stack within 180s, aborting test")
+
             self.program.failed = True
 
         return cmd.SUCCESS
@@ -306,6 +307,9 @@ class CreateStackCmd(cmd.Command):
         """
         When invoked, will delete the stack created by this command
         """
+
+        return cmd.SUCCESS
+
         if self.rollback_started is True:
             LOG.info("rollback already started for stack %s,%s, skip undo" % (self.stack_name,
                                                                               self.stack_id))

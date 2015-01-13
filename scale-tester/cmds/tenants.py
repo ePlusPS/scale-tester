@@ -236,6 +236,8 @@ class CreateTenantAndUsers(cmd.Command):
         created by this command
         """
         LOG.debug("undo")
+
+        return cmd.SUCCESS
         
         # should just access some singleton for keystone
         

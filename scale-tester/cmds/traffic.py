@@ -251,8 +251,8 @@ class IntraTenantPingTestCmd(cmd.Command):
           
         if len(ping_fail_pairs) > 0:
             LOG.error("Failed Ping Pairs: %s" % pprint.pformat(ping_fail_pairs)) 
-        LOG.info("Sleeping for 180s...")
-	time.sleep(180) 
+        #LOG.info("Sleeping for 180s...")
+        #time.sleep(180) 
         return cmd.SUCCESS
 
     def done(self):

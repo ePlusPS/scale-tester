@@ -86,8 +86,18 @@ class DeleteStacksCmd(cmd.Command):
                         cur_time = time.time()
                         
                         stack_status = _get_stack(user_heat_c, stack.stack_name)
-                        LOG.info("        STACK STATUS: %s" % stack_status)
-                    
+                        if stack_status == None:
+                            break
+                            LOG.info("        FINISHED DELETING STACK %s" % stack)
+                        else:
+                            LOG.info("        STACK STATUS: %s" % stack_status)
+                        
+                
+                for user in user_list:
+                    admin_keystone_c.users.delete(user)
+                    LOG.info("deleted user %s",str(user))
+
+                admin_keystone_c.tenants.delete(tenant)
                     
         return cmd.SUCCESS
 
