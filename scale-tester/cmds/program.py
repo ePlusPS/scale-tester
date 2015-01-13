@@ -24,6 +24,7 @@ class Resources:
         self.tenants = {}
         self.users = {}
         self.tenant_users = {}
+        self.traffic_results = {}
 
     def add_tenant(self,tenant):
         """

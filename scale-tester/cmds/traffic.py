@@ -15,6 +15,46 @@ DEFAULT_SUB_CMD = "cmds.traffic.IntraTenantPingTestCmd"
 
 MODULE_CLASS_REGEX = "(.+)\.(\w+)"
 
+class TrafficResultsCmd(cmd.Command):
+    def __init__(self, cmd_context, program, **kwargs):
+        super(TrafficLauncherCmd,self).__init__()
+        self.name = __name__ 
+        self.program = program
+        self.cmd_context = cmd_context
+    
+    def init(self):
+        LOG.debug("init - %s ", self.__class__.__name__)
+        # any precondition logic that should prevent the command from being 
+        # executed should be coded here
+        return cmd.SUCCESS
+
+    def execute(self):
+        resources = self.program.context['program.resources']
+        traffic_results = resources.traffic_results
+
+        for tenant_name, tenant_results in traffic_results.items():
+            LOG.info("Tenant %s Traffic Results:" % tenant_name)
+            for src_ip, all_results in tenant_results.items():
+                for dst_ip, ping_result in all_results.items():
+                    LOG.info("    src: %s, dst: %s, rc: %s" % (src_ip,
+                                                               dst_ip,
+                                                               ping_result['rc']))
+                
+        return cmd.SUCCESS
+
+    def done(self):
+        LOG.debug("done")
+        return cmd.SUCCESS
+
+    def undo(self):
+        """
+        Ping has no undo actions
+        """
+        LOG.debug("undo")
+
+        return cmd.SUCCESS
+
+
 class TrafficLauncherCmd(cmd.Command):
     """
     This command triggers a ping from a VM to a destination IP.
@@ -173,6 +213,9 @@ class IntraTenantPingTestCmd(cmd.Command):
         if self.program.failed is True:
             LOG.error("Skipping traffic test, program failed")
             return cmd.SUCCESS
+
+        resources = self.program.context['program.resources']
+        traffic_results = resources.traffic_results
                 
         self._setup_tenant()
 
@@ -236,6 +279,9 @@ class IntraTenantPingTestCmd(cmd.Command):
                 ssh_session = session_dict[src_ip]
                 result = self._get_ping_results(ssh_session, dst_ip)
                 self.results_dict[src_ip][dst_ip] = result
+
+        # store results in program resources, keyed by tenant name
+        traffic_results[self.tenant_name] = self.results_dict
 
         ping_fail_pairs = []
         for src_ip, results in self.results_dict.items():
