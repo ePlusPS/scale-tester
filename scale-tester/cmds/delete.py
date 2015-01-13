@@ -94,8 +94,9 @@ class DeleteStacksCmd(cmd.Command):
                         
                 
                 for user in user_list:
-                    admin_keystone_c.users.delete(user)
-                    LOG.info("deleted user %s",str(user))
+                    if user.name != "admin":
+                        admin_keystone_c.users.delete(user)
+                        LOG.info("deleted user %s",str(user))
 
                 admin_keystone_c.tenants.delete(tenant)
                     
