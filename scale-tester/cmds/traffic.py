@@ -17,7 +17,7 @@ MODULE_CLASS_REGEX = "(.+)\.(\w+)"
 
 class TrafficResultsCmd(cmd.Command):
     def __init__(self, cmd_context, program, **kwargs):
-        super(TrafficLauncherCmd,self).__init__()
+        super(TrafficResultsCmd,self).__init__()
         self.name = __name__ 
         self.program = program
         self.cmd_context = cmd_context
