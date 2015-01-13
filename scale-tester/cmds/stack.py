@@ -276,17 +276,20 @@ class CreateStackCmd(cmd.Command):
             cur_time = time.time()
             stack_status = self._get_stack(self.tenant_heat_c, self.stack_name)
             if stack_status is None:
-                LOG.error("Stack for stack_cmd %s not found, will abort test" % self.stack_name)
+                LOG.info("For tenant %s, Stack for stack_cmd %s not found, \
+                will abort test" % (self.tenant_name,self.stack_name))
                 self.program.failed = True
                 self.rollback_started = True
 
             if(stack_status.stack_status == "ROLLBACK_IN_PROGRESS"):
-                LOG.error("Stack for stack_cmd %s doing rollback, will abort test" % self.stack_name)
+                LOG.info("For tenant %s, Stack for stack_cmd %s doing \
+                rollback, will abort test" % (self.tenant_name, self.stack_name))
                 self.program.failed = True
                 self.rollback_started = True
                 
             if(stack_status.stack_status == "ROLLBACK_FAILED"):
-                LOG.error("Stack rollback failed for stack_cmd %s" % self.stack_name)
+                LOG.info("For tenant %s, Stack rollback failed for \
+                stack_cmd %s" % (self.tenant_name,self.stack_name))
                 self.program.failed = True
                 break
 
@@ -294,6 +297,9 @@ class CreateStackCmd(cmd.Command):
                 break
 
             if(stack_status.stack_status == "CREATE_COMPLETE"):
+                LOG.info("Tenant %s stack %s completed in %d seconds" % \
+                          (self.tenant_name, self.stack_name,
+                          (cur_time - start_time)))
                 break
         
         if cur_time - start_time > time_limit:
