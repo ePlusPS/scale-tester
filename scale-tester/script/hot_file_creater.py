@@ -9,7 +9,8 @@ import yaml
 import pprint
 import pudb
 
-DESCRIPTION = "HOT File Creator"
+DESCRIPTION = "This program allows a user to generate a heat \
+template file that has a user specified number of networks and vms per network." 
 
 
 LOG = logging.getLogger("hot_file_creater")
