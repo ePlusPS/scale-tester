@@ -102,8 +102,8 @@ def main():
     params['environment'] = {}
     params['files']={}
     params['parameters']= {'image_id': '355b3761-a8d3-4650-914e-ea72569346d9',
-                           'public_net': 'EXT1',
-                           'public_net_id': '12489859-b6f0-45cf-a502-fa981e26e6ac'
+                           'public_net': 'EX',
+                           'public_net_id': '1e04dc1e-958b-4d11-b55f-51593c4606e3'
                           }
     params['existing'] = True
     # params['stack_id']= command_line_args.stack_id
@@ -114,9 +114,9 @@ def main():
     # json_template = json.dumps(template)
     # pprint.pprint(json_template)
 
-    resp = heat.stacks.update(command_line_args._stack_id,**params)
-    
     pu.db
+    resp = heat.stacks.update(command_line_args.stack_id,**params)
+    
     print("resp type: %s" % type(resp))
     for i in resp:
         print("resp item: %s" % i)

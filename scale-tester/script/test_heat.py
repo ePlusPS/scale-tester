@@ -99,8 +99,8 @@ def main():
     params['environment'] = {}
     params['files']={}
     params['parameters']= {'image_id': '355b3761-a8d3-4650-914e-ea72569346d9',
-                           'public_net': 'EXT1',
-                           'public_net_id': '12489859-b6f0-45cf-a502-fa981e26e6ac'
+                           'public_net': 'EX',
+                           'public_net_id': '1e04dc1e-958b-4d11-b55f-51593c4606e3'
                           }
     params['stack_name']="nh-stack-1"
     params['template'] = template 
@@ -111,7 +111,8 @@ def main():
     # pprint.pprint(json_template)
 
     resp = heat.stacks.create(**params)
-    
+    # pu.db
+ 
     print("resp type: %s" % type(resp))
     for i in resp:
         print("resp item: %s" % i)
