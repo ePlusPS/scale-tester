@@ -110,7 +110,7 @@ class TrafficLauncherCmd(cmd.Command):
 
         LOG.debug("Walking resources") 
         if (resources is not None):
-            for tenant_name, tenant in tenant_stacks_dict:
+            for tenant_name, tenant in tenant_stacks_dict.items():
                 LOG.debug("Tenant: %s" % pprint.pformat(tenant))
                 a_user = tenant.target_user
 
