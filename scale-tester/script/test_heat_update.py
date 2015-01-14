@@ -80,7 +80,7 @@ def main():
         'user_domain_name': None, 
         'password': configuration['password'],
         'auth_token': None, 
-        'project_id': project_id,
+        'project_id': None,
         'project_name': configuration['tenant'], 
         'project_domain_id': None, 
         'project_domain_name': None 
