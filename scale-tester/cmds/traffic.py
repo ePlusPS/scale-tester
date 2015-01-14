@@ -35,12 +35,12 @@ class TrafficResultsCmd(cmd.Command):
         LOG.info("Aggregated traffic results: %s" % traffic_results)
 
         for tenant_name, tenant_results in traffic_results.items():
-            LOG.info("Tenant %s Traffic Results:" % tenant_name)
+            print("Tenant %s Traffic Results:" % tenant_name)
             for src_ip, all_results in tenant_results.items():
                 for dst_ip, ping_result in all_results.items():
-                    LOG.info("    src: %s, dst: %s, rc: %s" % (src_ip,
-                                                               dst_ip,
-                                                               ping_result['rc']))
+                    print("    src: %s, dst: %s, rc: %s" % (src_ip,
+                                                            dst_ip,
+                                                            ping_result['rc']))
                 
         return cmd.SUCCESS
 
