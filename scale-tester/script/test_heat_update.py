@@ -108,6 +108,8 @@ def main():
         'include_pass': False 
     }
 
+    pu.db
+
     hc = heat_client.Client(api_version='1',
                             endpoint=heat_endpoint,
                             **heat_kwargs)
