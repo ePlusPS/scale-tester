@@ -160,7 +160,7 @@ def main():
                            'public_net': 'EX',
                            'public_net_id': '1e04dc1e-958b-4d11-b55f-51593c4606e3'
                           }
-    params['existing'] = True
+    params['existing'] = False
     params['stack_id']= command_line_args.stack_id
     params['template'] = template 
 
