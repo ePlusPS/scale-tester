@@ -28,17 +28,23 @@ class TrafficResultsCmd(cmd.Command):
         # executed should be coded here
         return cmd.SUCCESS
 
-    def execute(self):
+    def undo(self):
         resources = self.program.context['program.resources']
         traffic_results = resources.traffic_results
+        tenant_failed_ips = resources.tenant_failed_ips
+        
+        LOG.info("Aggregated traffic results: %s" % traffic_results)
 
         for tenant_name, tenant_results in traffic_results.items():
-            LOG.info("Tenant %s Traffic Results:" % tenant_name)
+            print("Tenant %s Traffic Results:" % tenant_name)
             for src_ip, all_results in tenant_results.items():
                 for dst_ip, ping_result in all_results.items():
-                    LOG.info("    src: %s, dst: %s, rc: %s" % (src_ip,
-                                                               dst_ip,
-                                                               ping_result['rc']))
+                    print("    src: %s, dst: %s, rc: %s" % (src_ip,
+                                                            dst_ip,
+                                                            ping_result['rc']))
+
+        for tenant_name, fail_ip_list in tenant_failed_ips.items():
+            print("Tenant %s failed IPs:\n    %s" % (tenant_name, fail_ip_list))
                 
         return cmd.SUCCESS
 
@@ -46,12 +52,7 @@ class TrafficResultsCmd(cmd.Command):
         LOG.debug("done")
         return cmd.SUCCESS
 
-    def undo(self):
-        """
-        Ping has no undo actions
-        """
-        LOG.debug("undo")
-
+    def execute(self):
         return cmd.SUCCESS
 
 
@@ -77,7 +78,7 @@ class TrafficLauncherCmd(cmd.Command):
         return cmd.SUCCESS
 
 
-    def _get_ips_for_tenant(self, tenant, user):
+    def _get_ips_for_tenant(self, tenant_name, user_name):
         """
         For a given tenant, retrieve the tenants list of floating IPs
         corresponding to VMs
@@ -87,9 +88,9 @@ class TrafficLauncherCmd(cmd.Command):
         auth_url = openstack_conf["openstack_auth_url"]
 
         neutron_session = neutron_client.Client(auth_url=auth_url,
-                                                username=user.name,
-                                                password=user.name,
-                                                tenant_name=tenant.name)
+                                                username=user_name,
+                                                password=user_name,
+                                                tenant_name=tenant_name)
 
         tenant_floating_ip_objs = neutron_session.list_floatingips()
         tenant_floating_ip_objs = tenant_floating_ip_objs['floatingips']
@@ -108,58 +109,60 @@ class TrafficLauncherCmd(cmd.Command):
         #program_resources = self.program.context["program.resources"]
 
         resources = self.program.context['program.resources']
-
+        tenant_stacks_dict = resources.tenants_stacks
         tenant_ips = {}
 
         LOG.debug("Walking resources") 
         if (resources is not None):
-            for tenant_id in resources.tenants:
-                LOG.debug(pprint.pformat(resources.tenants[tenant_id]))
-                tenant = resources.tenants[tenant_id]
+            for tenant_name, tenant in tenant_stacks_dict.items():
+                LOG.debug("Tenant: %s" % pprint.pformat(tenant))
+                a_user = tenant.target_user
 
-                if (tenant_id in resources.tenant_users and \
-                    len(resources.tenant_users[tenant_id]) > 0):
+                my_stack = None
+                for stack in tenant.stack_list:
+                    my_stack = stack
+                    break
 
-                    LOG.debug(pprint.pformat(resources.tenant_users[tenant_id][0]))
-                    a_user = resources.tenant_users[tenant_id][0]
+                if my_stack == None:
+                    LOG.debug("tenant has no stacks, skipping")
+                    continue
 
-                    tenant_ips[tenant_id] = self._get_ips_for_tenant(tenant, a_user)
+                tenant_ips[tenant.id] = self._get_ips_for_tenant(tenant.name, a_user.username)
 
-                    stack_name = "stack-" + tenant.name
+                stack_name = "stack-" + tenant.name
 
-                    LOG.debug("self.cmd_context: %s, type: %s" % (self.cmd_context,
-                                                                  type(self.cmd_context)))
+                LOG.debug("self.cmd_context: %s, type: %s" % (self.cmd_context,
+                                                              type(self.cmd_context)))
 
-
-                    # Check if a sub_cmd was set in the cmd context
-                    if "sub_cmd" in self.cmd_context:
-                        sub_cmd = self.cmd_context["sub_cmd"]
-                    else:
-                        sub_cmd = DEFAULT_SUB_CMD
+                # Check if a sub_cmd was set in the cmd context
+                if "sub_cmd" in self.cmd_context:
+                    sub_cmd = self.cmd_context["sub_cmd"]
+                else:
+                    sub_cmd = DEFAULT_SUB_CMD
                     
-                    match_results = re.match(MODULE_CLASS_REGEX, sub_cmd)
+                match_results = re.match(MODULE_CLASS_REGEX, sub_cmd)
                     
-                    module = importlib.import_module(match_results.group(1))
-                    class_obj = getattr(module,match_results.group(2))
+                module = importlib.import_module(match_results.group(1))
+                class_obj = getattr(module,match_results.group(2))
 
-                    LOG.debug("module_path=%s" % module)
-                    LOG.debug("class name = %s " % class_obj)
+                LOG.debug("module_path=%s" % module)
+                LOG.debug("class name = %s " % class_obj)
                     
-                    # dynamically instantiate a traffic sub-command object
-                    intra_ping_cmd_obj = class_obj(self.cmd_context,
-                                                   self.program,
-                                                   stack_name=stack_name,
-                                                   tenant_name=tenant.name,
-                                                   tenant_id=tenant_id,
-                                                   user_name=a_user.name,
-                                                   password=a_user.name)
+                # dynamically instantiate a traffic sub-command object
+                intra_ping_cmd_obj = class_obj(self.cmd_context,
+                                               self.program,
+                                               stack_name=stack_name,
+                                               tenant_name=tenant.name,
+                                               tenant_id=tenant.id,
+                                               user_name=a_user.username,
+                                               password=a_user.username)
 
-                    program_runner = self.program.context['program_runner']
-                    program_runner.execution_queue.append(intra_ping_cmd_obj)
-                    msg = "enqueued IntraTenantPingTestCommand for tenant:%s, user:%s in \
-                           program_runner execution_queue" % \
-                           (tenant.name,a_user.name)
-                    LOG.debug(msg)
+                program_runner = self.program.context['program_runner']
+                program_runner.execution_queue.append(intra_ping_cmd_obj)
+                msg = "enqueued IntraTenantPingTestCommand for tenant:%s, user:%s in \
+                program_runner execution_queue" % \
+                (tenant.name,a_user.username)
+                LOG.debug(msg)
 
         resources.tenant_ips = tenant_ips
         
@@ -216,6 +219,7 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         resources = self.program.context['program.resources']
         traffic_results = resources.traffic_results
+        tenant_failed_ips = resources.tenant_failed_ips
                 
         self._setup_tenant()
 
@@ -294,6 +298,7 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         if len(fail_ip_list) > 0:
             LOG.error("Failed IPs: %s" % pprint.pformat(fail_ip_list))
+            tenant_failed_ips[self.tenant_name] = fail_ip_list
           
         if len(ping_fail_pairs) > 0:
             LOG.error("Failed Ping Pairs: %s" % pprint.pformat(ping_fail_pairs)) 
@@ -314,23 +319,27 @@ class IntraTenantPingTestCmd(cmd.Command):
         return cmd.SUCCESS
 
     def _setup_tenant(self):
-        openstack_conf = self.program.context["openstack_conf"]
-        auth_url = openstack_conf["openstack_auth_url"]
-
-        neutron_session = neutron_client.Client(auth_url=auth_url,
-                                                username=self.user_name,
-                                                password=self.password,
-                                                tenant_name=self.tenant_name)
-
-        # make default security group allow ICMP and SSH
-        security_groups = neutron_session.list_security_groups()
-        LOG.debug("security_groups: %s" % security_groups)
-        security_groups = security_groups['security_groups']
-        for sg in security_groups:
-            if sg['name'] == "default":
-                sg_id = sg['id']
-                LOG.debug("found default secgrp, adding ssh/icmp rules")
-                self._add_icmp_ssh_sg_rules(neutron_session, sg_id)        
+        try:
+            openstack_conf = self.program.context["openstack_conf"]
+            auth_url = openstack_conf["openstack_auth_url"]
+            
+            neutron_session = neutron_client.Client(auth_url=auth_url,
+                                                    username=self.user_name,
+                                                    password=self.password,
+                                                    tenant_name=self.tenant_name)
+            
+            # make default security group allow ICMP and SSH
+            security_groups = neutron_session.list_security_groups()
+            LOG.debug("security_groups: %s" % security_groups)
+            security_groups = security_groups['security_groups']
+            for sg in security_groups:
+                if sg['name'] == "default":
+                    sg_id = sg['id']
+                    LOG.debug("found default secgrp, adding ssh/icmp rules")
+                    self._add_icmp_ssh_sg_rules(neutron_session, sg_id)
+        except neutronclient.common.exceptions.Conflict:
+            LOG.debug("security group rules already exist, continuing...")
+            return
 
 
     def _add_icmp_ssh_sg_rules(self, neutron_session, sg_id):
@@ -517,7 +526,7 @@ class SingleDestPingTestCmd(IntraTenantPingTestCmd):
         return ["192.168.250.250"]
 
 def main():
-    ping_tester = TrafficLauncherCommand(None)
+    ping_tester = TrafficLauncherCmd(None)
     ping_tester._trigger_ping("7.1.1.46", "7.1.1.1")
     
 if __name__ == "__main__":
