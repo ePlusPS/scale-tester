@@ -1,7 +1,9 @@
 
 # This program demonstrates using the heatclient api
 # stack update
+import keystoneclient.session as kssession
 import keystoneclient.v2_0.client as keystone_client
+import keystoneclient.auth.identity.v2 as v2_auth
 import heatclient.v1.client as heat_client
 import heatclient.openstack.common.uuidutils as uuidutils
 import neutronclient.v2_0.client as neutron_client
@@ -59,12 +61,62 @@ def main():
     # read configuration
     configuration = yaml.load(yaml_endpoint)
 
+
+    #establish a keystone session
+    kwargs = {
+        'insecure': False,
+        'cacert': '',
+        'cert': None,
+        'key': None,
+        'timeout': None 
+    }
+
+    keystone_session = kssession.Session(verify=None, cert=None, timeout=None)
+
+    kwargs = {
+        'username': configuration['user'], 
+        'user_id': None, 
+        'user_domain_id': None, 
+        'user_domain_name': None, 
+        'password': configuration['password'],
+        'auth_token': None, 
+        'project_id': project_id,
+        'project_name': configuration['tenant'], 
+        'project_domain_id': None, 
+        'project_domain_name': None 
+    }
+
+    keystone_pass = v2_auth.Password(auth_url = configuration['auth_url'],
+                                     username=configuration['user'],
+                                     password=configuration['password'],
+                                     tenant_id=None,
+                                     tenant_name=configuration['tenant'])
+    service_type = 'orchestration'
+    heat_endpoint = keystone_pass.get_endpoint(session=keystone_session,
+                                               service_type=service_type)
+    endpoint_type = 'publicURL'
+    
+    heat_kwargs = {
+        'auth_url': configuration['auth_url'], 
+        'session': keystone_session,
+        'auth': keystone_pass,
+        'service_type': service_type,
+        'endpoint_type': endpoint_type,
+        'region_name': '', 
+        'username': configuration['user'], 
+        'password': configuration['password'], 
+        'include_pass': False 
+    }
+
+    hc = heat_client.Client(api_version='1',
+                            endpoint=heat_endpoint,
+                            **heat_kwargs)
     # login and obtain token
+    """ 
     keystoneClient = keystone_client.Client(auth_url=configuration['auth_url'],
                                             username=configuration['user'],
                                             password=configuration['password'],
                                             tenant_name=configuration['tenant'])
-
     neutronClient = neutron_client.Client(auth_url=configuration['auth_url'],
                                            username=configuration['user'],
                                            password=configuration['password'],
@@ -83,10 +135,11 @@ def main():
 
     heat = heat_client.Client(heat_url,
                               token=keystoneClient.auth_token)
-    """ 
     for stack in heat.stacks.list(limit=10):
         print(stack)
     """
+
+
     uuid = uuidutils.generate_uuid()
     
     print(uuid)
