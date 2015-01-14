@@ -114,7 +114,12 @@ class TrafficLauncherCmd(cmd.Command):
                 LOG.debug("Tenant: %s" % pprint.pformat(tenant))
                 a_user = tenant.target_user
 
-                if len(tenant.stack_list) < 1:
+                my_stack = None
+                for stack in tenant.stack_list:
+                    my_stack = stack
+                    break
+
+                if my_stack == None:
                     LOG.debug("tenant has no stacks, skipping")
                     continue
 
