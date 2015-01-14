@@ -96,6 +96,8 @@ def parse_program(test_configuration):
 
     program = Program()
     program.context = program_context
+    resources = Resources()
+    program.context['program.resources'] = resources
 
     for command_dict in commands:
         cmd_name = command_dict['command_name']
