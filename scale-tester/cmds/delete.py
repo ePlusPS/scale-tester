@@ -7,6 +7,7 @@ import heatclient.openstack.common.uuidutils as uuidutils
 import yaml
 import time
 import re
+import stack as stack_module
 
 LOG = logging.getLogger("scale_tester")
 

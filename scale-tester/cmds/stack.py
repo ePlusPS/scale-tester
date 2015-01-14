@@ -9,8 +9,10 @@ import heatclient.openstack.common.uuidutils as uuidutils
 import yaml
 import pudb
 import time
+import re
 
 LOG = logging.getLogger("scale_tester")
+TENANT_NAME_REGEX = "tenant-test-.*"
 
 class StackReqRsp:
     """
@@ -61,6 +63,86 @@ class StackReqRsp:
             LOG.debug(pprint.pformat(self.output))
 
         return params
+
+def _get_stack(heat_session, stack_name):
+    filter = {"name": stack_name}
+    stack_list = heat_session.stacks.list(filters=filter)
+    for stack_item in stack_list:
+        LOG.debug("stack status: %s" % stack_item)
+        LOG.debug("   stack_id: %s" % stack_item.id)
+        return stack_item
+
+class GetStacksCmd(cmd.Command):
+    """
+    Get list of existing stacks instead of creating new ones
+    """
+
+    def __init__(self, cmd_context, program):
+        super(GetStacksCmd,self).__init__()
+        self.context = cmd_context
+        self.program = program
+
+    def init(self):
+        if ("program.resources" in self.program.context):
+            return cmd.SUCCESS
+        else:
+            return cmd.FAILURE_HALT
+        
+        # make sure that self.program.context['program_runner'] exists
+        return cmd.SUCCESS
+
+    def execute(self):        
+        openstack_conf = self.program.context["openstack_conf"]
+        auth_url = openstack_conf["openstack_auth_url"]
+        heat_url = openstack_conf['openstack_heat_url']
+
+        resources = self.program.context['program.resources']
+        tenants_stacks_dict = resources.tenants_stacks
+
+        admin_keystone_c = cmd.get_keystone_client(self.program)
+        tenant_list = admin_keystone_c.tenants.list()
+
+        for tenant in tenant_list:
+
+            if re.match(TENANT_NAME_REGEX,tenant.name) != None:
+                LOG.info("GET TENANT: %s" % (tenant))
+
+                user_list = admin_keystone_c.tenants.list_users(tenant)
+                username = None
+                target_user = None
+                for user in user_list:
+                    if user.name != "admin":
+                        LOG.info("    GET USER: %s" % (user))
+                        username = user.name
+                        target_user = user
+
+                if username == None:
+                    continue
+
+                user_keystone_c = keystone_client.Client(auth_url=auth_url,
+                                                         username=username,
+                                                         password=username,
+                                                         tenant_name=tenant.name)
+
+                user_heat_url = heat_url % (user_keystone_c.auth_tenant_id)
+                
+                LOG.info("user_heat_url = %s" % (user_heat_url)) 
+                
+                user_heat_c = heat_client.Client(user_heat_url,
+                                                 token=user_keystone_c.auth_token)
+                
+                stack_list = user_heat_c.stacks.list()
+
+                tenant.stack_list = stack_list
+                tenant.target_user = target_user
+                tenants_stacks_dict[tenant.name] = tenant
+                
+        
+        return cmd.SUCCESS
+
+    def undo(self):
+        return cmd.SUCCESS
+        
 
 class CreateStacksCmd(cmd.Command):
     """
