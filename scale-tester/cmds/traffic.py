@@ -313,23 +313,27 @@ class IntraTenantPingTestCmd(cmd.Command):
         return cmd.SUCCESS
 
     def _setup_tenant(self):
-        openstack_conf = self.program.context["openstack_conf"]
-        auth_url = openstack_conf["openstack_auth_url"]
-
-        neutron_session = neutron_client.Client(auth_url=auth_url,
-                                                username=self.user_name,
-                                                password=self.password,
-                                                tenant_name=self.tenant_name)
-
-        # make default security group allow ICMP and SSH
-        security_groups = neutron_session.list_security_groups()
-        LOG.debug("security_groups: %s" % security_groups)
-        security_groups = security_groups['security_groups']
-        for sg in security_groups:
-            if sg['name'] == "default":
-                sg_id = sg['id']
-                LOG.debug("found default secgrp, adding ssh/icmp rules")
-                self._add_icmp_ssh_sg_rules(neutron_session, sg_id)        
+        try:
+            openstack_conf = self.program.context["openstack_conf"]
+            auth_url = openstack_conf["openstack_auth_url"]
+            
+            neutron_session = neutron_client.Client(auth_url=auth_url,
+                                                    username=self.user_name,
+                                                    password=self.password,
+                                                    tenant_name=self.tenant_name)
+            
+            # make default security group allow ICMP and SSH
+            security_groups = neutron_session.list_security_groups()
+            LOG.debug("security_groups: %s" % security_groups)
+            security_groups = security_groups['security_groups']
+            for sg in security_groups:
+                if sg['name'] == "default":
+                    sg_id = sg['id']
+                    LOG.debug("found default secgrp, adding ssh/icmp rules")
+                    self._add_icmp_ssh_sg_rules(neutron_session, sg_id)
+        except neutronclient.common.exceptions.Conflict:
+            LOG.debug("security group rules already exist, continuing...")
+            return
 
 
     def _add_icmp_ssh_sg_rules(self, neutron_session, sg_id):
