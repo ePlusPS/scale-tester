@@ -39,6 +39,9 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description=DESCRIPTION,epilog=EPILOG)
 
+    parser.add_argument('stack_id',
+                        help='stack_id')
+
     parser.add_argument('template',
                         default=DEFAULT_HOT_TEMPLATE_FILE,
                         metavar=DEFAULT_HOT_TEMPLATE_FILE,
@@ -96,14 +99,14 @@ def main():
     template = yaml.load(template_yml_stream)
     
     # setting up the kwargs for the stacks.create call
-    params['disable_rollback']=False
     params['environment'] = {}
     params['files']={}
     params['parameters']= {'image_id': '355b3761-a8d3-4650-914e-ea72569346d9',
                            'public_net': 'EXT1',
                            'public_net_id': '12489859-b6f0-45cf-a502-fa981e26e6ac'
                           }
-    params['stack_name']="nh-stack-1"
+    params['existing'] = True
+    # params['stack_id']= command_line_args.stack_id
     params['template'] = template 
 
     pprint.pprint(params)
@@ -111,8 +114,9 @@ def main():
     # json_template = json.dumps(template)
     # pprint.pprint(json_template)
 
-    resp = heat.stacks.create(**params)
+    resp = heat.stacks.update(command_line_args._stack_id,**params)
     
+    pu.db
     print("resp type: %s" % type(resp))
     for i in resp:
         print("resp item: %s" % i)
@@ -131,7 +135,8 @@ def main():
     resources = heat.resources.list(stack_id)
     for resource in resources:
         print("RESOURCE: %s" % resource)
-
+    
+    """
     print("waiting 10s to check ports...")
     time.sleep(10)
 
@@ -168,6 +173,7 @@ def main():
     time.sleep(10)
     print("deleting stack...")
     heat.stacks.delete(stack_id)
+    """
 
 if __name__=='__main__':
     main()
