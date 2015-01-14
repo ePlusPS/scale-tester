@@ -168,8 +168,7 @@ def main():
     
     # json_template = json.dumps(template)
     # pprint.pprint(json_template)
-
-    resp = heat.stacks.update(command_line_args.stack_id,**params)
+    resp = hc.stacks.update(command_line_args.stack_id,**params)
     
     print("resp type: %s" % type(resp))
     for i in resp:
