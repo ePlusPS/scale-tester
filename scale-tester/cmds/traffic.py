@@ -31,6 +31,7 @@ class TrafficResultsCmd(cmd.Command):
     def undo(self):
         resources = self.program.context['program.resources']
         traffic_results = resources.traffic_results
+        tenant_failed_ips = resources.tenant_failed_ips
         
         LOG.info("Aggregated traffic results: %s" % traffic_results)
 
@@ -41,6 +42,9 @@ class TrafficResultsCmd(cmd.Command):
                     print("    src: %s, dst: %s, rc: %s" % (src_ip,
                                                             dst_ip,
                                                             ping_result['rc']))
+
+        for tenant_name, fail_ip_list in tenant_failed_ips.items():
+            print("Tenant %s failed IPs:\n    %s" % (tenant_name, fail_ip_list))
                 
         return cmd.SUCCESS
 
@@ -215,6 +219,7 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         resources = self.program.context['program.resources']
         traffic_results = resources.traffic_results
+        tenant_failed_ips = resources.tenant_failed_ips
                 
         self._setup_tenant()
 
@@ -293,6 +298,7 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         if len(fail_ip_list) > 0:
             LOG.error("Failed IPs: %s" % pprint.pformat(fail_ip_list))
+            tenant_failed_ips[self.tenant_name] = fail_ip_list
           
         if len(ping_fail_pairs) > 0:
             LOG.error("Failed Ping Pairs: %s" % pprint.pformat(ping_fail_pairs)) 

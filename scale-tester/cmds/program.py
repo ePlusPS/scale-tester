@@ -26,6 +26,7 @@ class Resources:
         self.tenant_users = {}
         self.traffic_results = {}
         self.tenants_stacks = {}
+        self.tenant_failed_ips = {}
 
     def add_tenant(self,tenant):
         """
