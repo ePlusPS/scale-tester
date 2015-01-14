@@ -169,14 +169,15 @@ def main():
     # json_template = json.dumps(template)
     # pprint.pprint(json_template)
 
-    pu.db
     resp = heat.stacks.update(command_line_args.stack_id,**params)
     
     print("resp type: %s" % type(resp))
     for i in resp:
         print("resp item: %s" % i)
 
-
+    pu.db
+    
+    """
     filter = {"name": params['stack_name']}
     stack_list = heat.stacks.list(filters=filter)
     for stack_item in stack_list:
@@ -190,7 +191,9 @@ def main():
     resources = heat.resources.list(stack_id)
     for resource in resources:
         print("RESOURCE: %s" % resource)
-    
+    """
+
+
     """
     print("waiting 10s to check ports...")
     time.sleep(10)
