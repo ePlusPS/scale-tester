@@ -44,7 +44,8 @@ class TenantCleanupCmd(cmd.Command):
 
 
         # Delete instances with invalid project_id
-        nova_c = NovaClient("1.1", admin_username, admin_password, "admin")
+        nova_c = NovaClient("1.1", admin_username, admin_password,
+                            "admin", auth_url)
 
         server_list = nova_c.servers.list()
         for server in server_list:
@@ -57,16 +58,19 @@ class TenantCleanupCmd(cmd.Command):
 
         # Delete floating IPs with invalid tenant_id
         fips = neutron_c.list_floatingips()
+        fips = fips["floatingips"]
         for fip in fips:
             print("FLOATING IP: %s" % fip)
         
         # Delete routers with invalid tenant_id
         routers = neutron_c.list_routers()
+        routers = routers["routers"]
         for router in routers:
             print("ROUTER: %s" % router)
 
         # Delete networks with invalid tenant_id
         networks = neutron_c.list_networks()
+        networks = networks["networks"]
         for network in networks:
             print("NETWORK: %s" % network)
         
