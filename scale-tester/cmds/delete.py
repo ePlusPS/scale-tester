@@ -55,6 +55,8 @@ class TenantCleanupCmd(cmd.Command):
             #print("SERVER: %s" % pprint.pformat(server.__dict__))
             print("SERVER, tenant_id: %s  name: %s" % (server.tenant_id,
                                                        server.name))
+            if server.tenant_id not in tenant_id_list:
+                server.delete()
                 
         neutron_c = neutron_client.Client(auth_url=auth_url,
                                           username=admin_username,
@@ -66,18 +68,37 @@ class TenantCleanupCmd(cmd.Command):
         fips = fips["floatingips"]
         for fip in fips:
             print("FLOATING IP: %s" % fip)
+            if fip['tenant_id'] not in tenant_id_list:
+                neutron_c.delete_floatingip(fip['id'])
         
         # Delete routers with invalid tenant_id
         routers = neutron_c.list_routers()
         routers = routers["routers"]
         for router in routers:
             print("ROUTER: %s" % router)
+            if router['tenant_id'] not in tenant_id_list:
+                if router['name'] != "PHYSICAL_GLOBAL_ROUTER_ID":
+                    router_ports = neutron_c.list_ports(device_id=router['id'],
+                                                        device_owner="network:router_interface")['ports']
+                    router_gw = neutron_c.list_ports(device_id=router['id'],
+                                                        device_owner="network:router_gateway")['ports']
+                    print("router ports: %s" % router_ports)
+                    print("router_gw :%s" % router_gw)
+                    for router_port in router_ports:
+                        neutron_c.remove_interface_router(router['id'],
+                                                          {'port_id': router_port['id']})
+                    if len(router_gw) > 0:
+                        neutron_c.remove_gateway_router(router['id'])
+                                                        
+                    neutron_c.delete_router(router['id'])
 
         # Delete networks with invalid tenant_id
         networks = neutron_c.list_networks()
         networks = networks["networks"]
         for network in networks:
             print("NETWORK: %s" % network)
+            if network['tenant_id'] not in tenant_id_list:
+                neutron_c.delete_network(network['id'])
         
         return cmd.SUCCESS
 
