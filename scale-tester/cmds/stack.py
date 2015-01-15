@@ -30,6 +30,41 @@ class StackReqRsp:
         # output key-value pairs for the template output parameters
         self.output = [] 
     
+    def generate_heat_update_req(self,use_existing_params=False):
+        """
+        returns a dicitionary compliant with kwargs keys for
+        heat.stacks.update()
+
+        fields = {
+            'stack_id': args.id,
+            'parameters': utils.format_parameters(args.parameters),
+            'existing': args.existing, <--- if true, reuse existing parameters applied to stack
+            'template': template,
+            'files': dict(list(tpl_files.items()) + list(env_files.items())), <--- environment file
+            'environment': env
+        }
+        """
+        params = {}
+
+        if (use_existing_params):
+            params['existing'] = use_existing_params 
+        else:
+            params['parameters']= {'image_id': \
+                                    self.input['image_id'],
+                                   'public_net': self.input['public_net'],
+                                   'public_net_id':self.input['public_net_id']
+                                  }
+        params['environment'] = {}
+        params['files']={}
+        
+        # updated heat template file
+        heat_template_stream = open(self.input['heat_hot_file'])
+        heat_template_dict = yaml.load(heat_template_stream)
+
+        params['template'] = heat_template_dict 
+       
+        return params
+
     def generate_heat_create_req(self,stack_name):
         """
         Returns a dictionary compliant with the kwargs keys
@@ -453,3 +488,151 @@ class CreateStackCmd(cmd.Command):
             LOG.debug("   stack_id: %s" % stack_item.id)
             stack_id = stack_item.id
             return stack_item
+
+class UpdateStacksCmd(cmd.Command):
+    """
+    This command will iterate through all the tenant stacks 
+    and create tenant specific update stack cmds
+    """
+
+    def __init__(self,cmd_context,program, **kwargs):
+        """
+        constructor
+        """
+        super(UpdateStacksCmd,self).__init__()
+        self.context = cmd_context
+        self.program = program
+    
+    def init(self):
+        """
+        Check for command precondition state
+        """
+        if ("program.resources" in self.program.context):
+            return cmd.SUCCESS
+        else:
+            return cmd.FAILURE_HALT
+    
+    def execute(self):
+        pu.db 
+        resources = self.program.context['program.resources']
+        tenants_stacks_dict = resources.tenants_stacks
+        
+        program_runner = self.program.context['program_runner']
+
+        for tenant_name in tenants_stacks_dict:
+            tenant = tenants_stacks_dict[tenant_name]
+
+            tenant_user = tenant.target_user
+            for tenant_stack in tenant.stack_list:
+                LOG.debug("Preparing to update tenant %s, stack %s" % \
+                          (tenant_name,tenant_stack.stack_name))
+                kwargs = {
+                    'stack_id':tenant_stack.id,
+                    'tenant_name':tenant_name,
+                    'user_name':tenant.target_user.username,
+                    'vm_image_id':self.context['vm_image_id'],
+                    'external_network':self.context['external_network'],
+                    'external_network_id':self.context['external_network_id'],
+                    'heat_hot_file': self.context['heat_hot_file']
+                }
+                update_stack_cmd = UpdateStackCmd({},self.program,**kwargs)
+                program_runner.execution_queue.append(update_stack_cmd)
+        
+        return cmd.SUCCESS
+
+    def undo(self):
+        """
+        """
+        pass
+
+class UpdateStackCmd(cmd.Command):
+    """
+    This class is encapsulates the functionality for updating the stack
+    for a given tenant, user
+    Notable context keys
+        'vm_image_id'
+        'external_network'
+        'heat_hot_file' <--- path to update heat template file
+    """
+    
+    def __init__(self,cmd_context,program, **kwargs):
+        """
+        constructor
+        kwargs - 'stack_id', 'tenant_name', 'user_name'
+                 'vm_image_id'
+                 'external_network'
+                 'heat_hot_file' <--- This is the updated hot template file
+        """
+        super(UpdateStackCmd,self).__init__()
+        self.context = cmd_context
+        self.program = program
+        
+        # existing stack_id
+        self.stack_id = kwargs['stack_id'] 
+        self.tenant_name = kwargs['tenant_name']
+        self.user_name   = kwargs['user_name']
+        self.vm_image_id = kwargs['vm_image_id']
+        self.external_network = kwargs['external_network']
+        self.external_network_id = kwargs['external_network_id']
+        self.heat_hot_file = kwargs['heat_hot_file']
+        
+        # keystone client session for the tenant / tenant-user
+        self.tenant_keystone_c = None
+        self.tenant_heat_c = None
+        self.rollback_started = False
+
+    def init(self):
+        LOG.debug("init")
+        LOG.debug(pprint.pformat(self.context))
+        return cmd.SUCCESS
+    
+    def execute(self):
+        
+        # skip if program has already failed
+        if self.program.failed:
+            LOG.error("Not executing update stack for tenant %s, user %s, \
+             stack %s" % (self.tenant_name,self.stack_name,self.user_name))
+            return cmd.SUCCESS
+        else: 
+            # login for tenant, user
+            openstack_conf = self.program.context["openstack_conf"]
+
+            self.tenant_keystone_c = \
+                cmd.get_keystone_client_for_tenant_user(
+                                              tenant_name=self.tenant_name,
+                                              user_name=self.user_name,
+                                              password=self.user_name,
+                                              auth_url=\
+                                              openstack_conf["openstack_auth_url"])
+            # assumming that we're using heat
+            heat_url = openstack_conf['openstack_heat_url']
+            heat_url = heat_url % (self.tenant_keystone_c.auth_tenant_id)
+        
+            LOG.debug("heat_url = %s" % (heat_url)) 
+        
+            self.tenant_heat_c = heat_client.Client(heat_url,
+                                    token=self.tenant_keystone_c.auth_token)
+
+            stackReqRsp = StackReqRsp()
+            # template parameters - perhaps not needed if existing paramter values
+            # are used
+            stackReqRsp.input['image_id']=self.vm_image_id
+            stackReqRsp.input['public_net']=self.external_network
+            stackReqRsp.input['public_net_id']=self.external_network_id
+            stackReqRsp.input['heat_hot_file']=self.heat_hot_file
+
+            heat_update_req = \
+                stackReqRsp.generate_heat_update_req(use_existing_params=False)
+            LOG.debug("heat update request dictionary generated")
+            LOG.debug(pprint.pformat(heat_update_req))
+        
+            self.tenant_heat_c.stacks.update(self.stack_id, **heat_update_req)
+            
+            # wait for stack update to complete
+            return cmd.SUCCESS
+
+    def undo(self):
+        """
+        undo implementation
+        """
+        return cmd.SUCCESS
