@@ -48,6 +48,13 @@ class CreateTenantsCmd(cmd.Command):
         global_test_params = self.program.context["global_test_parameters"]
         
         tenant_name_prefix = global_test_params['tenant_name_prefix']
+
+        if 'tenant_base_index' in global_test_params:
+            tenant_base_index = global_test_params['tenant_base_index']
+            LOG.debug("using tenant_base_index = %d" % (tenant_base_index))
+        else:
+            tenant_base_index = 0
+
         num_tenants = global_test_params['num_of_tenants']
         num_users_per_tenant = global_test_params['num_users_per_tenant']
 
@@ -64,8 +71,10 @@ class CreateTenantsCmd(cmd.Command):
             cmd_context = {}
 
             # so if tenant_name_prefix == tenant-test, then the tenant_name
-            # will be tenant-test-0, tenant-test-1, etc
-            tenant_name = "%s-%d" % (tenant_name_prefix,x)
+            # will be tenant-test-0, tenant-test-1, etc if the
+            # tenant_base_index == 0
+            index = tenant_base_index + x
+            tenant_name = "%s-%d" % (tenant_name_prefix,index)
             createTenantAndUsersCmd = CreateTenantAndUsers(cmd_context,
                                                            self.program,
                                                            tenant_name=tenant_name,

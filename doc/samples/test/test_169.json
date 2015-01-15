@@ -11,6 +11,7 @@
             },
             "global_test_parameters" : {
                 "tenant_name_prefix": "tenant-test",
+                "tenant_base_index": 0,
                 "num_of_tenants" : 1,
                 "num_users_per_tenant": 1,
                 "num_networks_per_tenant" : 3,

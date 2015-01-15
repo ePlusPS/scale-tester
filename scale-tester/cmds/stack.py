@@ -99,8 +99,9 @@ class StackReqRsp:
 
         return params
 
-def _get_stack(heat_session, stack_name):
-    filter = {"name": stack_name}
+def _get_stack(heat_session, stack_name, filter_attribute="name"):
+    # filter = {"name": stack_name}
+    filter = {filter_attribute: stack_name}
     stack_list = heat_session.stacks.list(filters=filter)
     for stack_item in stack_list:
         LOG.debug("stack status: %s" % stack_item)
@@ -432,7 +433,8 @@ class CreateStackCmd(cmd.Command):
         """
 
         return cmd.SUCCESS
-
+        # disabled for now
+        # use -d option instead
         if self.rollback_started is True:
             LOG.info("rollback already started for stack %s,%s, skip undo" % (self.stack_name,
                                                                               self.stack_id))
@@ -513,7 +515,6 @@ class UpdateStacksCmd(cmd.Command):
             return cmd.FAILURE_HALT
     
     def execute(self):
-        pu.db 
         resources = self.program.context['program.resources']
         tenants_stacks_dict = resources.tenants_stacks
         
@@ -558,9 +559,12 @@ class UpdateStackCmd(cmd.Command):
     def __init__(self,cmd_context,program, **kwargs):
         """
         constructor
-        kwargs - 'stack_id', 'tenant_name', 'user_name'
+        kwargs - 'stack_id',
+                 'tenant_name',
+                 'user_name'
                  'vm_image_id'
                  'external_network'
+                 'external_network_id'
                  'heat_hot_file' <--- This is the updated hot template file
         """
         super(UpdateStackCmd,self).__init__()
@@ -625,14 +629,60 @@ class UpdateStackCmd(cmd.Command):
                 stackReqRsp.generate_heat_update_req(use_existing_params=False)
             LOG.debug("heat update request dictionary generated")
             LOG.debug(pprint.pformat(heat_update_req))
-        
+            pu.db 
             self.tenant_heat_c.stacks.update(self.stack_id, **heat_update_req)
             
             # wait for stack update to complete
+            # refactor this section so that the timer part is common for
+            # both stack create and update
+            LOG.info("Polling stack status for 180s...")
+            time_limit = 180
+            start_time = time.time()
+            cur_time = time.time()
+            
+            while cur_time - start_time < time_limit:
+                time.sleep(5)
+                cur_time = time.time()
+                stack_status = _get_stack(self.tenant_heat_c,
+                                          self.stack_id,
+                                          filter_attribute="id")
+            
+                if stack_status is None:
+                    LOG.info("For tenant %s, Stack for stack_cmd %s not found, \
+                    will abort test" % (self.tenant_name,self.stack_name))
+                    self.program.failed = True
+                    self.rollback_started = True
+
+                if(stack_status.stack_status == "ROLLBACK_IN_PROGRESS"):
+                    LOG.info("For tenant %s, Stack for stack_cmd %s doing \
+                    rollback, will abort test" % (self.tenant_name, self.stack_name))
+                    self.program.failed = True
+                    self.rollback_started = True
+                
+                if(stack_status.stack_status == "ROLLBACK_FAILED"):
+                    LOG.info("For tenant %s, Stack rollback failed for \
+                    stack_cmd %s" % (self.tenant_name,self.stack_name))
+                    self.program.failed = True
+                    break
+
+                if self.rollback_started is True:
+                    break
+
+                if(stack_status.stack_status == "UPDATE_COMPLETE"):
+                    LOG.info("Tenant %s stack id %s completed in %d seconds" % \
+                              (self.tenant_name, self.stack_id,
+                              (cur_time - start_time)))
+                    break
+        
+            if cur_time - start_time > time_limit:
+                LOG.error("Could not create stack within 180s, aborting test")
+                self.program.failed = True
+    
             return cmd.SUCCESS
 
     def undo(self):
         """
         undo implementation
         """
+        # use -d option to wipe allocated resources
         return cmd.SUCCESS
