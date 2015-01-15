@@ -1,10 +1,11 @@
 import cmd
 import pprint
 import logging
-import heatclient.v1.client as heat_client
 import keystoneclient.v2_0.client as keystone_client
-import heatclient.openstack.common.uuidutils as uuidutils
-import yaml
+#import novaclient.v1_1.client as nova_client
+from novaclient.client import Client as NovaClient
+import neutronclient.v2_0.client as neutron_client
+import heatclient.v1.client as heat_client
 import time
 import re
 import stack as stack_module
@@ -12,6 +13,76 @@ import stack as stack_module
 LOG = logging.getLogger("scale_tester")
 
 TENANT_NAME_REGEX = "tenant-test-.*"
+
+class TenantCleanupCmd(cmd.Command):
+    """
+    Deletes instances, floating IPs, routers, and networks
+    that belong to a deleted tenant.
+    """
+
+    def __init__(self, cmd_context, program):
+        super(TenantCleanupCmd,self).__init__()
+        self.context = cmd_context
+        self.program = program
+
+    def init(self):
+        return cmd.SUCCESS
+
+    def execute(self):
+        openstack_conf = self.program.context["openstack_conf"]
+        auth_url = openstack_conf["openstack_auth_url"]
+        admin_username = openstack_conf['openstack_user']
+        admin_password = openstack_conf['openstack_password']
+
+        admin_keystone_c = cmd.get_keystone_client(self.program)
+
+        # Get list of valid tenant IDs
+        tenant_list = admin_keystone_c.tenants.list()
+        tenant_id_list = []
+        for tenant in tenant_list:
+            tenant_id_list.append(tenant.id)
+        
+        print("VALID TENANT IDs: %s" % tenant_id_list)
+
+        # Delete instances with invalid project_id
+        nova_c = NovaClient("1.1", admin_username, admin_password,
+                            "admin", auth_url)
+
+        search_opts = {"all_tenants": True}
+        server_list = nova_c.servers.list(search_opts=search_opts)
+        #print("NOVA SERVERS: %s" % server_list)
+        for server in server_list:
+            #print("SERVER: %s" % pprint.pformat(server.__dict__))
+            print("SERVER, tenant_id: %s  name: %s" % (server.tenant_id,
+                                                       server.name))
+                
+        neutron_c = neutron_client.Client(auth_url=auth_url,
+                                          username=admin_username,
+                                          password=admin_password,
+                                          tenant_name="admin")
+
+        # Delete floating IPs with invalid tenant_id
+        fips = neutron_c.list_floatingips()
+        fips = fips["floatingips"]
+        for fip in fips:
+            print("FLOATING IP: %s" % fip)
+        
+        # Delete routers with invalid tenant_id
+        routers = neutron_c.list_routers()
+        routers = routers["routers"]
+        for router in routers:
+            print("ROUTER: %s" % router)
+
+        # Delete networks with invalid tenant_id
+        networks = neutron_c.list_networks()
+        networks = networks["networks"]
+        for network in networks:
+            print("NETWORK: %s" % network)
+        
+        return cmd.SUCCESS
+
+    def undo(self):
+        return cmd.SUCCESS
 
 class DeleteStacksCmd(cmd.Command):
     """
