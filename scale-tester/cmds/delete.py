@@ -2,7 +2,8 @@ import cmd
 import pprint
 import logging
 import keystoneclient.v2_0.client as keystone_client
-import novaclient.v1_1.client as nova_client
+#import novaclient.v1_1.client as nova_client
+from novaclient.client import Client as NovaClient
 import neutronclient.v2_0.client as neutron_client
 import heatclient.v1.client as heat_client
 import time
@@ -43,10 +44,7 @@ class TenantCleanupCmd(cmd.Command):
 
 
         # Delete instances with invalid project_id
-        nova_c = nova_client.Client(auth_url=auth_url,
-                                    username=admin_username,
-                                    password=admin_password,
-                                    tenant_name="admin")
+        nova_c = NovaClient("1.1", admin_username, admin_password, "admin")
 
         server_list = nova_c.servers.list()
         for server in server_list:
