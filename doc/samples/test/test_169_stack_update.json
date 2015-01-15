@@ -21,30 +21,17 @@
         },
         "commands" : [
             {
-                "command_name" : "cmds.tenants.CreateTenantsCmd",
-                "context" : {}
-            },
-	    {
-                "command_name" : "cmds.stack.UndoStackWaitCmd",
+                "command_name" : "cmds.stack.GetStacksCmd",
                 "context" : {}
             },
             {
-                "command_name" : "cmds.stack.CreateStacksCmd",
+                "command_name" : "cmds.stack.UpdateStacksCmd",
+                "description" : "Update currently installed stacks", 
                 "context" : {
-                    "vm_image_id" : "3db57786-a193-4b29-8172-518d259939de",
+                    "vm_image_id" : "355b3761-a8d3-4650-914e-ea72569346d9",
                     "external_network" : "EX",
                     "external_network_id" : "1e04dc1e-958b-4d11-b55f-51593c4606e3",
-                    "heat_hot_file":"../doc/samples/heat/3_networks_only.yaml"
-                }
-            },
-            {
-                "command_name" : "cmds.barrier.StackCreateBarrierCmd",
-                "context" : {}
-            },
-            {
-                "command_name" : "cmds.traffic.TrafficLauncherCmd",
-                "context" : {
-                    "sub_cmd" : "cmds.traffic.CrossTenantPingTestCmd"
+                    "heat_hot_file":"../doc/samples/heat/3_networks_3_vms.yaml"
                 }
             }
         ]

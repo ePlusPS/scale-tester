@@ -117,7 +117,6 @@ def main():
     for i in resp:
         print("resp item: %s" % i)
 
-
     filter = {"name": params['stack_name']}
     stack_list = heat.stacks.list(filters=filter)
     for stack_item in stack_list:
