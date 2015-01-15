@@ -53,6 +53,48 @@ def parse_args():
 
     return args
 
+def old_way():
+    command_line_args = parse_args()
+
+    # read configuration
+    configuration = yaml.load(yaml_endpoint)
+    pu.db
+    keystoneClient = keystone_client.Client(auth_url=configuration['auth_url'],
+                                            username=configuration['user'],
+                                            password=configuration['password'],
+                                            tenant_name=configuration['tenant'])
+
+    heat_url = 'http://10.1.10.169:8004/v1/%s' % (keystoneClient.auth_tenant_id) 
+
+    logger.debug("heat_url=%s" %(heat_url))
+
+    heat = heat_client.Client(heat_url,
+                              token=keystoneClient.auth_token)
+    
+    params = {}
+
+    # load the yaml
+    #pu.db
+    template_yml_stream = open(command_line_args.template)
+    template = yaml.load(template_yml_stream)
+    
+    # setting up the kwargs for the stacks.create call
+    params['environment'] = {}
+    params['files']={}
+    params['parameters']= {'image_id': '355b3761-a8d3-4650-914e-ea72569346d9',
+                           'public_net': 'EX',
+                           'public_net_id': '1e04dc1e-958b-4d11-b55f-51593c4606e3'
+                          }
+    params['existing'] = False
+    params['stack_id']= command_line_args.stack_id
+    params['template'] = template 
+
+    pprint.pprint(params)
+
+    heat.stacks.update(**params)
+    
+    print("done")
+
 def main():
      
     
@@ -168,11 +210,11 @@ def main():
     
     # json_template = json.dumps(template)
     # pprint.pprint(json_template)
-    resp = hc.stacks.update(**params)
+    hc.stacks.update(**params)
     
-    print("resp type: %s" % type(resp))
-    for i in resp:
-        print("resp item: %s" % i)
+    #print("resp type: %s" % type(resp))
+    #for i in resp:
+    #    print("resp item: %s" % i)
 
     pu.db
     
@@ -233,4 +275,5 @@ def main():
     """
 
 if __name__=='__main__':
-    main()
+    # main()
+    old_way()
