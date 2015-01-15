@@ -41,15 +41,20 @@ class TenantCleanupCmd(cmd.Command):
         tenant_id_list = []
         for tenant in tenant_list:
             tenant_id_list.append(tenant.id)
-
+        
+        print("VALID TENANT IDs: %s" % tenant_id_list)
 
         # Delete instances with invalid project_id
         nova_c = NovaClient("1.1", admin_username, admin_password,
                             "admin", auth_url)
 
-        server_list = nova_c.servers.list()
+        search_opts = {"all_tenants": True}
+        server_list = nova_c.servers.list(search_opts=search_opts)
+        #print("NOVA SERVERS: %s" % server_list)
         for server in server_list:
-            print("SERVER: %s" % server)
+            #print("SERVER: %s" % pprint.pformat(server.__dict__))
+            print("SERVER, tenant_id: %s  name: %s" % (server.tenant_id,
+                                                       server.name))
                 
         neutron_c = neutron_client.Client(auth_url=auth_url,
                                           username=admin_username,
