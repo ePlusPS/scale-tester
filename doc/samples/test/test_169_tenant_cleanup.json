@@ -1,0 +1,29 @@
+{
+    "program" : {
+        "context" : {
+            "openstack_conf" : {
+                "openstack_project":"admin",
+                "openstack_user":"admin",
+                "openstack_password":"f73744eca7354bfb",
+                "openstack_auth_url":"http://10.1.10.169:5000/v2.0/",
+                "openstack_heat_url":"http://10.1.10.169:8004/v1/%s",
+                "openstack_heat_stack_owner_role":"heat_stack_owner"
+            },
+            "global_test_parameters" : {
+                "tenant_name_prefix": "tenant-test",
+                "num_of_tenants" : 2,
+                "num_users_per_tenant": 1,
+                "num_networks_per_tenant" : 2,
+                "num_vms_per_network" : 2,
+                "ext_net":"10.1.10.0/24",
+                "ext_net_gw":"10.1.10.1"
+            }
+        },
+        "commands" : [
+            {
+                "command_name" : "cmds.delete.TenantCleanupCmd",
+                "context" : {}
+            }
+        ]
+    }
+}
