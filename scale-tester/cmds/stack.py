@@ -385,10 +385,10 @@ class CreateStackCmd(cmd.Command):
         #time.sleep(10)
         
         # Poll for stack status, proceed when stack create is finished
-        LOG.info("Polling stack status for 180s...")
         time_limit = 180
         start_time = time.time()
         cur_time = time.time()
+        LOG.info("Polling stack status for %ds ..." % time_limit)
         while cur_time - start_time < time_limit:
             time.sleep(5)
             cur_time = time.time()
@@ -677,7 +677,8 @@ class UpdateStackCmd(cmd.Command):
                     break
         
             if cur_time - start_time > time_limit:
-                LOG.error("Could not create stack within 180s, aborting test")
+                LOG.error("Could not create stack within %ds, aborting test" % \
+                           (time_limit))
                 self.program.failed = True
     
             return cmd.SUCCESS
