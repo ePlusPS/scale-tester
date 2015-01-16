@@ -629,8 +629,10 @@ class UpdateStackCmd(cmd.Command):
                 stackReqRsp.generate_heat_update_req(use_existing_params=False)
             LOG.debug("heat update request dictionary generated")
             LOG.debug(pprint.pformat(heat_update_req))
-            pu.db 
             self.tenant_heat_c.stacks.update(self.stack_id, **heat_update_req)
+
+            LOG.info("Updated stack for tenant %s, stack id %s" % \
+                     (self.tenant_name, self.stack_id))
             
             # wait for stack update to complete
             # refactor this section so that the timer part is common for
