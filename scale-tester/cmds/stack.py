@@ -13,6 +13,7 @@ import re
 
 LOG = logging.getLogger("scale_tester")
 TENANT_NAME_REGEX = "tenant-test-.*"
+MAX_FAILED_STACK_UPDATES = 5
 
 class StackReqRsp:
     """
@@ -421,7 +422,8 @@ class CreateStackCmd(cmd.Command):
                 break
         
         if cur_time - start_time > time_limit:
-            LOG.error("Could not create stack within 180s, aborting test")
+            LOG.error("Could not create stack within %ds, aborting test" %
+                      (time_limit))
 
             self.program.failed = True
 
@@ -519,6 +521,10 @@ class UpdateStacksCmd(cmd.Command):
         tenants_stacks_dict = resources.tenants_stacks
         
         program_runner = self.program.context['program_runner']
+
+        # set a global counter that will track the number of stack update
+        # failures
+        self.program.context['update_stacks_failures'] = 0
 
         for tenant_name in tenants_stacks_dict:
             tenant = tenants_stacks_dict[tenant_name]
@@ -679,7 +685,13 @@ class UpdateStackCmd(cmd.Command):
             if cur_time - start_time > time_limit:
                 LOG.error("Could not create stack within %ds, aborting test" % \
                            (time_limit))
-                self.program.failed = True
+                
+                num_failures = self.program.context['update_stacks_failures']
+                num_failures = num_failures + 1
+                self.program.context['update_stacks_failures'] = num_failures
+
+                if (num_failures > MAX_FAILED_STACK_UPDATES):
+                    self.program.failed = True
     
             return cmd.SUCCESS
 
