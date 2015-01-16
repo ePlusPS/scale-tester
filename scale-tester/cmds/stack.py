@@ -595,7 +595,7 @@ class UpdateStackCmd(cmd.Command):
         # skip if program has already failed
         if self.program.failed:
             LOG.error("Not executing update stack for tenant %s, user %s, \
-             stack %s" % (self.tenant_name,self.stack_name,self.user_name))
+             stack %s" % (self.tenant_name,self.user_name,self.stack_id))
             return cmd.SUCCESS
         else: 
             # login for tenant, user
@@ -638,7 +638,7 @@ class UpdateStackCmd(cmd.Command):
             # refactor this section so that the timer part is common for
             # both stack create and update
             LOG.info("Polling stack status for 180s...")
-            time_limit = 180
+            time_limit = 360
             start_time = time.time()
             cur_time = time.time()
             
