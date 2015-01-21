@@ -14,6 +14,7 @@ import re
 LOG = logging.getLogger("scale_tester")
 TENANT_NAME_REGEX = "tenant-test-.*"
 MAX_FAILED_STACK_UPDATES = 1
+STACK_CREATE_TIME_LIMIT=180
 
 class StackReqRsp:
     """
@@ -386,7 +387,7 @@ class CreateStackCmd(cmd.Command):
         #time.sleep(10)
         
         # Poll for stack status, proceed when stack create is finished
-        time_limit = 180
+        time_limit = STACK_CREATE_TIME_LIMIT 
         start_time = time.time()
         cur_time = time.time()
         LOG.info("Polling stack status for %ds ..." % time_limit)
@@ -654,8 +655,8 @@ class UpdateStackCmd(cmd.Command):
             # wait for stack update to complete
             # refactor this section so that the timer part is common for
             # both stack create and update
-            LOG.info("Polling stack status for 180s...")
-            time_limit = 180
+            LOG.info("Polling stack status for %d..." % (time_limit))
+            time_limit = STACK_CREATE_TIME_LIMIT
             start_time = time.time()
             cur_time = time.time()
             
@@ -678,8 +679,9 @@ class UpdateStackCmd(cmd.Command):
                     self.program.failed = True
                     self.rollback_started = True
                 
-                if(stack_status.stack_status == "ROLLBACK_FAILED"):
-                    LOG.info("For tenant %s, Stack rollback failed for \
+                if(stack_status.stack_status == "ROLLBACK_FAILED" or
+                   stack_status.stack_status == "FAILED"):
+                    LOG.info("For tenant %s, Stack failed for \
                     stack_cmd %s" % (self.tenant_name,self.stack_name))
                     self.program.failed = True
                     break
