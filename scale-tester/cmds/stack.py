@@ -13,7 +13,7 @@ import re
 
 LOG = logging.getLogger("scale_tester")
 TENANT_NAME_REGEX = "tenant-test-.*"
-MAX_FAILED_STACK_UPDATES = 5
+MAX_FAILED_STACK_UPDATES = 1
 
 class StackReqRsp:
     """
@@ -655,7 +655,7 @@ class UpdateStackCmd(cmd.Command):
             # refactor this section so that the timer part is common for
             # both stack create and update
             LOG.info("Polling stack status for 180s...")
-            time_limit = 360
+            time_limit = 180
             start_time = time.time()
             cur_time = time.time()
             
