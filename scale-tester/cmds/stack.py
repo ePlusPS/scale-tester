@@ -526,24 +526,35 @@ class UpdateStacksCmd(cmd.Command):
         # failures
         self.program.context['update_stacks_failures'] = 0
 
-        for tenant_name in tenants_stacks_dict:
-            tenant = tenants_stacks_dict[tenant_name]
+        tenant_white_list = None
+        if ("tenant_white_list" in self.context):
+            tenant_white_list = self.context["tenant_white_list"]
+            LOG.debug("tenant white list enabled")
 
-            tenant_user = tenant.target_user
-            for tenant_stack in tenant.stack_list:
-                LOG.debug("Preparing to update tenant %s, stack %s" % \
-                          (tenant_name,tenant_stack.stack_name))
-                kwargs = {
-                    'stack_id':tenant_stack.id,
-                    'tenant_name':tenant_name,
-                    'user_name':tenant.target_user.username,
-                    'vm_image_id':self.context['vm_image_id'],
-                    'external_network':self.context['external_network'],
-                    'external_network_id':self.context['external_network_id'],
-                    'heat_hot_file': self.context['heat_hot_file']
-                }
-                update_stack_cmd = UpdateStackCmd({},self.program,**kwargs)
-                program_runner.execution_queue.append(update_stack_cmd)
+        for tenant_name in sorted(tenants_stacks_dict):
+            
+            if (tenant_white_list is None or tenant_name in tenant_white_list):
+
+                tenant = tenants_stacks_dict[tenant_name]
+
+                tenant_user = tenant.target_user
+                for tenant_stack in tenant.stack_list:
+                    LOG.debug("Preparing to update tenant %s, stack %s" % \
+                              (tenant_name,tenant_stack.stack_name))
+                    kwargs = {
+                        'stack_id':tenant_stack.id,
+                        'tenant_name':tenant_name,
+                        'user_name':tenant.target_user.username,
+                        'vm_image_id':self.context['vm_image_id'],
+                        'external_network':self.context['external_network'],
+                        'external_network_id':self.context['external_network_id'],
+                        'heat_hot_file': self.context['heat_hot_file']
+                    }
+                    update_stack_cmd = UpdateStackCmd({},self.program,**kwargs)
+                    program_runner.execution_queue.append(update_stack_cmd)
+            else:
+                LOG.info("Skipped, tenant %s not in white list" % \
+                          (tenant_name))
         
         return cmd.SUCCESS
 
