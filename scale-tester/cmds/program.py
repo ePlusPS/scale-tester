@@ -113,7 +113,6 @@ def parse_program(test_configuration):
         class_obj = getattr(module,match_results.group('class_name'))
 
         # LOG.debug("class object name = %s" % (class_obj.__name__))
-        
         cmd_context = command_dict['context']
         LOG.debug(pprint.pformat(cmd_context))
 

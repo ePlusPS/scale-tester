@@ -8,6 +8,7 @@ import importlib
 
 import paramiko
 import neutronclient.v2_0.client as neutron_client
+import neutronclient.common.exceptions as neutron_exceptions
 
 LOG = logging.getLogger("scale_tester")
 
@@ -234,7 +235,7 @@ class IntraTenantPingTestCmd(cmd.Command):
         start_time = time.time()
         
         first_vm_up = False
-        time_to_wait = 480
+        time_to_wait = 60
         time_to_wait_vm_up = 119
 
         while len(pending_session_list) > 0:
@@ -337,7 +338,7 @@ class IntraTenantPingTestCmd(cmd.Command):
                     sg_id = sg['id']
                     LOG.debug("found default secgrp, adding ssh/icmp rules")
                     self._add_icmp_ssh_sg_rules(neutron_session, sg_id)
-        except neutronclient.common.exceptions.Conflict:
+        except neutron_exceptions.Conflict:
             LOG.debug("security group rules already exist, continuing...")
             return
 

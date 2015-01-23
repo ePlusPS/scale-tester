@@ -533,7 +533,6 @@ class UpdateStacksCmd(cmd.Command):
             LOG.debug("tenant white list enabled")
 
         for tenant_name in sorted(tenants_stacks_dict):
-            
             if (tenant_white_list is None or tenant_name in tenant_white_list):
 
                 tenant = tenants_stacks_dict[tenant_name]
