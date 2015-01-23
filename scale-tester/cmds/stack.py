@@ -654,8 +654,8 @@ class UpdateStackCmd(cmd.Command):
             # wait for stack update to complete
             # refactor this section so that the timer part is common for
             # both stack create and update
-            LOG.info("Polling stack status for %d..." % (time_limit))
             time_limit = STACK_CREATE_TIME_LIMIT
+            LOG.info("Polling stack status for %d..." % (time_limit))
             start_time = time.time()
             cur_time = time.time()
             
