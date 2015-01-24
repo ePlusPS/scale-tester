@@ -400,6 +400,7 @@ class CreateStackCmd(cmd.Command):
                 will abort test" % (self.tenant_name,self.stack_name))
                 self.program.failed = True
                 self.rollback_started = True
+                break
 
             if(stack_status.stack_status == "ROLLBACK_IN_PROGRESS"):
                 LOG.info("For tenant %s, Stack for stack_cmd %s doing \
