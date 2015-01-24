@@ -671,17 +671,19 @@ class UpdateStackCmd(cmd.Command):
                     will abort test" % (self.tenant_name,self.stack_name))
                     self.program.failed = True
                     self.rollback_started = True
+                    break
 
                 if(stack_status.stack_status == "ROLLBACK_IN_PROGRESS"):
                     LOG.info("For tenant %s, Stack for stack_cmd %s doing \
                     rollback, will abort test" % (self.tenant_name, self.stack_name))
                     self.program.failed = True
                     self.rollback_started = True
+                    break
                 
                 if(stack_status.stack_status == "ROLLBACK_FAILED" or
-                   stack_status.stack_status == "FAILED"):
+                   stack_status.stack_status == "UPDATE_FAILED"):
                     LOG.info("For tenant %s, Stack failed for \
-                    stack_cmd %s" % (self.tenant_name,self.stack_name))
+                    stack_id %s" % (self.tenant_name,self.stack_id))
                     self.program.failed = True
                     break
 
