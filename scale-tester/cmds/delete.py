@@ -9,6 +9,7 @@ import heatclient.v1.client as heat_client
 import time
 import re
 import stack as stack_module
+import pudb
 
 LOG = logging.getLogger("scale_tester")
 
@@ -103,7 +104,7 @@ class TenantCleanupCmd(cmd.Command):
                 for network_port in network_ports:
                     neutron_c.delete_port(network_port['id'])
                 neutron_c.delete_network(network['id'])
-        
+
         return cmd.SUCCESS
 
     def undo(self):

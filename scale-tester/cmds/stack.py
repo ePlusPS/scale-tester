@@ -10,6 +10,7 @@ import yaml
 import pudb
 import time
 import re
+from operator import attrgetter
 
 LOG = logging.getLogger("scale_tester")
 TENANT_NAME_REGEX = "tenant-test-.*"
@@ -215,9 +216,9 @@ class CreateStacksCmd(cmd.Command):
         resources = self.program.context['program.resources']
         LOG.debug("Walking resources") 
         if (resources is not None):
-            for tenant_id in resources.tenants:
+            for tenant_id, tenant in sorted(resources.tenants.iteritems(), key=lambda (k,v): v.name):
                 LOG.debug(pprint.pformat(resources.tenants[tenant_id]))
-                tenant = resources.tenants[tenant_id]
+                #tenant = resources.tenants[tenant_id]
 
                 if (tenant_id in resources.tenant_users and \
                     len(resources.tenant_users[tenant_id]) > 0):
