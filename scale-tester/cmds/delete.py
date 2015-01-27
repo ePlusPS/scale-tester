@@ -97,7 +97,11 @@ class TenantCleanupCmd(cmd.Command):
         networks = networks["networks"]
         for network in networks:
             print("NETWORK: %s" % network)
-            if network['tenant_id'] not in tenant_id_list:
+            if network['tenant_id'] not in tenant_id_list:                
+                network_ports = neutron_c.list_ports(network_id=network['id'])['ports']
+                print("network ports: %s" % network_ports)
+                for network_port in network_ports:
+                    neutron_c.delete_port(network_port['id'])
                 neutron_c.delete_network(network['id'])
         
         return cmd.SUCCESS
