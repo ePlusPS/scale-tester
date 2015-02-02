@@ -10,6 +10,7 @@ import yaml
 import pudb
 import time
 import re
+from operator import attrgetter
 
 LOG = logging.getLogger("scale_tester")
 TENANT_NAME_REGEX = "tenant-test-.*"
@@ -212,12 +213,15 @@ class CreateStacksCmd(cmd.Command):
         all_stacks = []
         self.program.context["all_stacks"] = all_stacks
 
+        # a list of tenants that failed a stack create
+        self.program.context["failed_stack_create_tenants"] = []
+
         resources = self.program.context['program.resources']
         LOG.debug("Walking resources") 
         if (resources is not None):
-            for tenant_id in resources.tenants:
+            for tenant_id, tenant in sorted(resources.tenants.iteritems(), key=lambda (k,v): v.name):
                 LOG.debug(pprint.pformat(resources.tenants[tenant_id]))
-                tenant = resources.tenants[tenant_id]
+                #tenant = resources.tenants[tenant_id]
 
                 if (tenant_id in resources.tenant_users and \
                     len(resources.tenant_users[tenant_id]) > 0):
@@ -426,8 +430,11 @@ class CreateStackCmd(cmd.Command):
         if cur_time - start_time > time_limit:
             LOG.error("Could not create stack within %ds, aborting test" %
                       (time_limit))
-
-            self.program.failed = True
+            # append tenant-name to failed stack create list 
+            failed_stack_create_tenants = \
+                self.program.context["failed_stack_create_tenants"]
+            failed_stack_create_tenants.append(self.tenant_name)
+            self.program.failed = False
 
         return cmd.SUCCESS
 
@@ -494,6 +501,50 @@ class CreateStackCmd(cmd.Command):
             LOG.debug("   stack_id: %s" % stack_item.id)
             stack_id = stack_item.id
             return stack_item
+
+
+class DumpFailedStacksCmd(cmd.Command):
+    """
+    This command just dumps the summary of failures that occurred
+    during a stack create or update.
+    """
+
+    
+    def __init__(self,cmd_context,program, **kwargs):
+        """
+        constructor
+        """
+        super(DumpFailedStacksCmd,self).__init__()
+        self.context = cmd_context
+        self.program = program
+
+    def init(self):
+        return cmd.SUCCESS 
+
+    def execute(self):
+        if ("failed_stack_create_tenants" not in self.program.context):
+            LOG.debug("Command execution requires program context %s to be " + 
+                "present" % ("failed_stack_create_tenants"))
+            return cmd.FAILURE_CONTINUE
+        else:
+            LOG.info("****************************")
+            failed_stack_create_tenants = \
+                self.program.context["failed_stack_create_tenants"]
+
+            for failed_tenant in failed_stack_create_tenants:
+                LOG.info("stack operation failed for tenant %s" % \
+                         (failed_tenant))
+
+            LOG.info("****************************")
+
+    def done(self):
+        return cmd.SUCCESS
+    
+    def undo(self):
+        return cmd.SUCCESS
+        
+
+
 
 class UpdateStacksCmd(cmd.Command):
     """
@@ -679,7 +730,6 @@ class UpdateStackCmd(cmd.Command):
                     rollback, will abort test" % (self.tenant_name, self.stack_name))
                     self.program.failed = True
                     self.rollback_started = True
-                    break
                 
                 if(stack_status.stack_status == "ROLLBACK_FAILED" or
                    stack_status.stack_status == "UPDATE_FAILED"):
