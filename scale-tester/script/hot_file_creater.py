@@ -40,9 +40,15 @@ def parse_args():
                         help='number of tenant networks')
 
     # make this required
-    parser.add_argument('--num-vms',
+    parser.add_argument('--num-vms-per-net',
                         type=int,
-                        help='number of vms per network')
+                        help='number of vms per network',
+                        default=0)
+
+    parser.add_argument('--total-vms',
+                        type=int,
+                        help='If toggled, caps the total number of vms',
+                        default=0)
 
     parser.add_argument('yaml',
                         help='yaml output file name')
@@ -52,14 +58,18 @@ def parse_args():
     # set app_context
 
     num_networks = args.num_networks
-    num_vms = args.num_vms
+    num_vms_per_net = args.num_vms_per_net
+
+    total_vms = args.total_vms
     
     app_context['num_networks'] = num_networks
-    app_context['num_vms'] = num_vms
+    app_context['num_vms_per_net'] = num_vms_per_net
+    app_context['total_vms'] = total_vms
     app_context['yaml_output_file'] = args.yaml
 
-    LOG.debug("num_networks = %d, num vms = %d" % (app_context['num_networks'],
-                                                   app_context['num_vms']))
+    LOG.debug("num_networks = %d, num vms = %d, total-vms %d" % (app_context['num_networks'],
+                                                   app_context['num_vms_per_net'],
+                                                   app_context['total_vms']))
     
     # enable in order to see the debug output for a reference yaml ->
     # dictionary conversion
@@ -226,7 +236,7 @@ def generate_hot_template():
     Based on the input parameters, dynamically generate the hot template file
     
     num_networks
-    num_vms - if num_vms == 0, then floating-ips will not be generated
+    num_vms_per_net - if num_vms_per_net == 0, then floating-ips will not be generated
 
     assumes 
 
@@ -236,10 +246,13 @@ def generate_hot_template():
     """
 
     num_networks = app_context['num_networks']
-    num_vms_per_network = app_context['num_vms']
+    num_vms_per_net = app_context['num_vms_per_net']
     
+    # a running counter for the number of vms created in the template
+    num_of_vms_created = 0
+
     description = "HOT template file for %d networks each having %d vms" % \
-                  (num_networks, num_vms_per_network)
+                  (num_networks, num_vms_per_net)
 
     hot_yaml = create_yaml_template(description)
 
@@ -319,7 +332,13 @@ def generate_hot_template():
         add_resource_property(resources,router_interface_name,'subnet_id',{'get_resource':subnet_name})
 
         # handle server for each network 
-        for vm_index in range (0,num_vms_per_network):
+        for vm_index in range (0,num_vms_per_net):
+            if (app_context['total_vms'] > 0 and
+                num_of_vms_created >= app_context['total_vms']):
+                LOG.debug("threshold for total_vms (%d) met" % \
+                          (num_of_vms_created))
+                break
+
             # create server
             server_name = server_name_template % (network_name,vm_index)
             server_port_name = server_network_port_name_template % \
@@ -358,6 +377,8 @@ def generate_hot_template():
                                     {'get_attr': [server_name,'first_address']})
 
             add_output_parameter(outputs,output_param_name,server_output_param)
+            
+            num_of_vms_created = num_of_vms_created + 1
 
     LOG.debug("%s" % (pprint.pformat(hot_yaml)))
     
@@ -378,7 +399,7 @@ def test_hot_template_api():
 
     hot_template_description = \
         "HOT template for %d networks and %d vms per network" % \
-        (app_context['num_networks'],app_context['num_vms'])
+        (app_context['num_networks'],app_context['num_vms_per_net'])
 
     yaml_dict = create_yaml_template(hot_template_description)
 
