@@ -36,7 +36,7 @@ class TrafficResultsCmd(cmd.Command):
         
         LOG.info("Aggregated traffic results: %s" % traffic_results)
 
-        for tenant_name, tenant_results in traffic_results.items():
+        for tenant_name, tenant_results in sorted(traffic_results.iteritems(), key=lambda (k,v): k):
             print("Tenant %s Traffic Results:" % tenant_name)
             for src_ip, all_results in tenant_results.items():
                 for dst_ip, ping_result in all_results.items():
@@ -44,7 +44,7 @@ class TrafficResultsCmd(cmd.Command):
                                                             dst_ip,
                                                             ping_result['rc']))
 
-        for tenant_name, fail_ip_list in tenant_failed_ips.items():
+        for tenant_name, fail_ip_list in sorted(tenant_failed_ips.iteritems(), key=lambda (k,v): k):
             print("Tenant %s failed IPs:\n    %s" % (tenant_name, fail_ip_list))
                 
         return cmd.SUCCESS
