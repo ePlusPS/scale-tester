@@ -396,7 +396,7 @@ class CreateStackCmd(cmd.Command):
         cur_time = time.time()
         LOG.info("Polling stack status for %ds ..." % time_limit)
         while cur_time - start_time < time_limit:
-            time.sleep(5)
+            time.sleep(2)
             cur_time = time.time()
             stack_status = self._get_stack(self.tenant_heat_c, self.stack_name)
             if stack_status is None:
@@ -712,7 +712,7 @@ class UpdateStackCmd(cmd.Command):
             cur_time = time.time()
             
             while cur_time - start_time < time_limit:
-                time.sleep(5)
+                time.sleep(2)
                 cur_time = time.time()
                 stack_status = _get_stack(self.tenant_heat_c,
                                           self.stack_id,
