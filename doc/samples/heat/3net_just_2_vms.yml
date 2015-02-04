@@ -1,0 +1,99 @@
+description: HOT template file for 3 networks each having 1 vms
+heat_template_version: '2013-05-23'
+outputs:
+  net_0_server_0_private_ip:
+    description: private ip address of net_0_server_0
+    value:
+      get_attr: [net_0_server_0, first_address]
+  net_1_server_0_private_ip:
+    description: private ip address of net_1_server_0
+    value:
+      get_attr: [net_1_server_0, first_address]
+parameters:
+  image_id: {description: Image Name, type: string}
+  public_net: {description: public network name, type: string}
+  public_net_id: {description: public network id, type: string}
+resources:
+  net_0:
+    properties: {name: net_0}
+    type: OS::Neutron::Net
+  net_0_server_0:
+    properties:
+      flavor: m1.tiny
+      image: {get_param: image_id}
+      name: net_0_server_0
+      networks:
+      - port: {get_resource: net_0_server_0_port}
+    type: OS::Nova::Server
+  net_0_server_0_floating_ip:
+    depends_on: router1_interface_0
+    properties:
+      floating_network_id: {get_param: public_net_id}
+      port_id: {get_resource: net_0_server_0_port}
+    type: OS::Neutron::FloatingIP
+  net_0_server_0_port:
+    properties:
+      network_id: {get_resource: net_0}
+    type: OS::Neutron::Port
+  net_1:
+    properties: {name: net_1}
+    type: OS::Neutron::Net
+  net_1_server_0:
+    properties:
+      flavor: m1.tiny
+      image: {get_param: image_id}
+      name: net_1_server_0
+      networks:
+      - port: {get_resource: net_1_server_0_port}
+    type: OS::Nova::Server
+  net_1_server_0_floating_ip:
+    depends_on: router1_interface_1
+    properties:
+      floating_network_id: {get_param: public_net_id}
+      port_id: {get_resource: net_1_server_0_port}
+    type: OS::Neutron::FloatingIP
+  net_1_server_0_port:
+    properties:
+      network_id: {get_resource: net_1}
+    type: OS::Neutron::Port
+  net_2:
+    properties: {name: net_2}
+    type: OS::Neutron::Net
+  router1:
+    properties:
+      external_gateway_info:
+        network: {get_param: public_net}
+    type: OS::Neutron::Router
+  router1_interface_0:
+    properties:
+      router_id: {get_resource: router1}
+      subnet_id: {get_resource: subnet_0}
+    type: OS::Neutron::RouterInterface
+  router1_interface_1:
+    properties:
+      router_id: {get_resource: router1}
+      subnet_id: {get_resource: subnet_1}
+    type: OS::Neutron::RouterInterface
+  router1_interface_2:
+    properties:
+      router_id: {get_resource: router1}
+      subnet_id: {get_resource: subnet_2}
+    type: OS::Neutron::RouterInterface
+  subnet_0:
+    properties:
+      cidr: 13.13.13.0/24
+      gateway_ip: 13.13.13.1
+      network_id: {get_resource: net_0}
+    type: OS::Neutron::Subnet
+  subnet_1:
+    properties:
+      cidr: 14.14.14.0/24
+      gateway_ip: 14.14.14.1
+      network_id: {get_resource: net_1}
+    type: OS::Neutron::Subnet
+  subnet_2:
+    properties:
+      cidr: 15.15.15.0/24
+      gateway_ip: 15.15.15.1
+      network_id: {get_resource: net_2}
+    type: OS::Neutron::Subnet
