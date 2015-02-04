@@ -568,6 +568,43 @@ class UpdateStacksCmd(cmd.Command):
             return cmd.SUCCESS
         else:
             return cmd.FAILURE_HALT
+
+    def _parse_tenant_whitelist(self,tenant_white_list):
+        """
+        This method parses the given white list and expands
+        entries.
+
+        For example, a input white-list might look like the following
+        ['tenant-test-0','tenant-test-10:20'] 
+
+        The processed output white-list will look like the following
+        ['tenant-test-0','tenant-test-10', 'tenant-test-11', ...]
+        @type tenant_white_list:list
+        @param tenant_white_list : A list of white listed tenants to
+                                   operate against
+        """
+        tenant_range_regex = "(?P<tenant_prefix>.*\-.*\-)(?P<start_index>[0-9]+):(?P<end_index>[0-9]+)"
+
+        processed_white_list = []
+        for list_item in tenant_white_list:
+            range_match = re.match(tenant_range_regex, list_item)
+
+            if (range_match):
+                tenant_prefix = range_match.group('tenant_prefix')
+                start = int(range_match.group('start_index'))
+                end = int(range_match.group('end_index'))
+                LOG.debug("tenant prefix = %s, start=%d, end=%d" % (tenant_prefix, start,end))
+
+                for tenant_index in xrange(start,end+1):
+                    expanded_tenant = "%s%d" % (tenant_prefix,tenant_index)
+                    processed_white_list.append(expanded_tenant)
+                    LOG.debug("expanded_tenant=%s" % (expanded_tenant))
+                
+        else:
+            processed_white_list.append(list_item)
+
+        
+        return processed_white_list
     
     def execute(self):
         resources = self.program.context['program.resources']
@@ -581,8 +618,9 @@ class UpdateStacksCmd(cmd.Command):
 
         tenant_white_list = None
         if ("tenant_white_list" in self.context):
-            tenant_white_list = self.context["tenant_white_list"]
             LOG.debug("tenant white list enabled")
+            # parse the white-list
+            tenant_white_list = _parse_tenant_whitelist(self.context["tenant_white_list"])
 
         for tenant_name in sorted(tenants_stacks_dict):
             if (tenant_white_list is None or tenant_name in tenant_white_list):
