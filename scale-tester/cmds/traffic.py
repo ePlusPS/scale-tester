@@ -244,7 +244,7 @@ class IntraTenantPingTestCmd(cmd.Command):
             
             # allow 5 minutes for VMs to boot, or 90s after first VM is successfully connected
             if time_delta > time_to_wait: 
-                for vm__fix_ip, vm_float_ip in pending_session_list:
+                for vm_fix_ip, vm_float_ip in pending_session_list:
                     LOG.error("Could not open session to %s, timeout exceeded" % vm_float_ip)
                     src_ip_list.remove((vm_fix_ip, vm_float_ip))
                     fail_ip_list.append(vm_float_ip)
