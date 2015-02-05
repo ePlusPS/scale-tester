@@ -250,12 +250,12 @@ class IntraTenantPingTestCmd(cmd.Command):
                     fail_ip_list.append(vm_ip)
                 break
                 
-            for vm_ip in pending_session_list:
-                LOG.debug("Connecting to %s..." % vm_ip)
-                ssh_session = self._get_ssh_session(vm_ip)
+            for vm_fix_ip, vm_float_ip in pending_session_list:
+                LOG.debug("Connecting to %s..." % vm_float_ip)
+                ssh_session = self._get_ssh_session(vm_float_ip)
                 if ssh_session:
-                    pending_session_list.remove(vm_ip)
-                    session_dict[vm_ip] = ssh_session
+                    pending_session_list.remove(vm_float_ip)
+                    session_dict[vm_float_ip] = ssh_session
                     LOG.debug("Connection success")
                     #if not first_vm_up:
                     #    first_vm_up = True
@@ -267,23 +267,23 @@ class IntraTenantPingTestCmd(cmd.Command):
                 time.sleep(10)
             
         # do all to all ping within tenant
-        for src_ip in src_ip_list:
-            self.results_dict[src_ip] = {}
+        for src_fix_ip, src_float_ip in src_ip_list:
+            self.results_dict[src_float_ip] = {}
             for dst_ip in dst_ip_list:
-                ssh_session = session_dict[src_ip]
-                rc = self._trigger_ping_async(ssh_session, dst_ip)
+                ssh_session = session_dict[src_float_ip]
+                rc = self._trigger_ping_async(ssh_session, src_fix_ip, dst_ip)
                 #self.results_dict[src_ip][dst_ip] = result
 
         # let pings run, wait 25s
         time.sleep(25)
 
         # retrieve ping results
-        for src_ip in src_ip_list:
-            self.results_dict[src_ip] = {}
+        for src_fix_ip, src_float_ip in src_ip_list:
+            self.results_dict[src_float_ip] = {}
             for dst_ip in dst_ip_list:
-                ssh_session = session_dict[src_ip]
-                result = self._get_ping_results(ssh_session, dst_ip)
-                self.results_dict[src_ip][dst_ip] = result
+                ssh_session = session_dict[src_float_ip]
+                result = self._get_ping_results(ssh_session, src_fix_ip, dst_ip)
+                self.results_dict[src_float_ip][dst_ip] = result
 
         # store results in program resources, keyed by tenant name
         traffic_results[self.tenant_name] = self.results_dict
@@ -410,7 +410,7 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         for fip_dict in tenant_floating_ip_objs:
             tenant_fixed_ips.append(fip_dict['fixed_ip_address'])
-            tenant_floating_ips.append(fip_dict['floating_ip_address'])
+            tenant_floating_ips.append((fip_dict['fixed_ip_address'], fip_dict['floating_ip_address']))
             LOG.debug("tenant: %s, floating ip dict: %s" % (self.tenant_name, fip_dict))
 
         return tenant_floating_ips
@@ -464,9 +464,11 @@ class IntraTenantPingTestCmd(cmd.Command):
         return {"rc": rc,
                 "stdout": output_lines}
 
-    def _trigger_ping_async(self, ssh_session, dst_ip, count=10, interval=1):
+    def _trigger_ping_async(self, ssh_session, src_ip, dst_ip, count=10, interval=1):
 
-        cmd_str = "sh -c 'ping -c %s %s > %s.out; echo $? > %s.rc.out' &" % (count, dst_ip, dst_ip, dst_ip)
+        cmd_str = "sh -c 'ping -c %s -I %s %s > %s--%s.out; echo $? > %s--%s.rc.out' &" % (count, src_ip, dst_ip, 
+                                                                                         src_ip, dst_ip,
+                                                                                         src_ip, dst_ip)
         LOG.debug("running command: %s" % (cmd_str))
         
         sin, sout, serr = ssh_session.exec_command(cmd_str, timeout=10)
@@ -476,9 +478,9 @@ class IntraTenantPingTestCmd(cmd.Command):
 
         return rc
 
-    def _get_ping_results(self, ssh_session, dst_ip):
+    def _get_ping_results(self, ssh_session, src_ip, dst_ip):
 
-        cmd_str = "cat %s.out" % (dst_ip)
+        cmd_str = "cat %s--%s.out" % (src_ip, dst_ip)
         #LOG.debug("running command: %s" % (cmd_str))
         
         sin, sout, serr = ssh_session.exec_command(cmd_str, timeout=10)
@@ -489,7 +491,7 @@ class IntraTenantPingTestCmd(cmd.Command):
             #LOG.debug("  %s" % line)
             output_lines.append(line)
 
-        cmd_str = "cat %s.rc.out" % (dst_ip)
+        cmd_str = "cat %s--%s.rc.out" % (src_ip, dst_ip)
         #LOG.debug("running command: %s" % (cmd_str))
         
         sin, sout, serr = ssh_session.exec_command(cmd_str, timeout=10)
