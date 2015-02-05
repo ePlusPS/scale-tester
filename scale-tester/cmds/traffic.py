@@ -244,17 +244,17 @@ class IntraTenantPingTestCmd(cmd.Command):
             
             # allow 5 minutes for VMs to boot, or 90s after first VM is successfully connected
             if time_delta > time_to_wait: 
-                for vm_ip in pending_session_list:
-                    LOG.error("Could not open session to %s, timeout exceeded" % vm_ip)
-                    src_ip_list.remove(vm_ip)
-                    fail_ip_list.append(vm_ip)
+                for vm__fix_ip, vm_float_ip in pending_session_list:
+                    LOG.error("Could not open session to %s, timeout exceeded" % vm_float_ip)
+                    src_ip_list.remove((vm_fix_ip, vm_float_ip))
+                    fail_ip_list.append(vm_float_ip)
                 break
                 
             for vm_fix_ip, vm_float_ip in pending_session_list:
                 LOG.debug("Connecting to %s..." % vm_float_ip)
                 ssh_session = self._get_ssh_session(vm_float_ip)
                 if ssh_session:
-                    pending_session_list.remove(vm_float_ip)
+                    pending_session_list.remove((vm_fix_ip, vm_float_ip))
                     session_dict[vm_float_ip] = ssh_session
                     LOG.debug("Connection success")
                     #if not first_vm_up:
