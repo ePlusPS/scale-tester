@@ -117,6 +117,8 @@ class TrafficLauncherCmd(cmd.Command):
         if (resources is not None):
             for tenant_name, tenant in tenant_stacks_dict.items():
                 LOG.debug("Tenant: %s" % pprint.pformat(tenant))
+                #if tenant_name != "tenant-test-99":
+                #    continue
                 a_user = tenant.target_user
 
                 my_stack = None
@@ -244,7 +246,7 @@ class IntraTenantPingTestCmd(cmd.Command):
             
             # allow 5 minutes for VMs to boot, or 90s after first VM is successfully connected
             if time_delta > time_to_wait: 
-                for vm__fix_ip, vm_float_ip in pending_session_list:
+                for vm_fix_ip, vm_float_ip in pending_session_list:
                     LOG.error("Could not open session to %s, timeout exceeded" % vm_float_ip)
                     src_ip_list.remove((vm_fix_ip, vm_float_ip))
                     fail_ip_list.append(vm_float_ip)
