@@ -198,6 +198,13 @@ class ProgramRunner(object):
 
         pending_threads = []
 
+        # max thread window size
+        # -1 == unlimited
+        max_threads = -1
+
+        if "max_threads" in self.program.context:
+            max_threads = self.program.context['max_threads']
+
         try:
             while(True):
             
@@ -217,6 +224,24 @@ class ProgramRunner(object):
                         cmd_thread = threading.Thread(target=cmd.execute)
                         cmd_thread.start()
                         pending_threads.append(cmd_thread)
+                        
+                        LOG.debug("number of pending threads = %d" % \
+                                  (len(pending_threads)))
+
+                        # wait for the window of threads to finish before
+                        # proceeding
+                        # after the threads are done, clear the pending_threads
+                        # list
+                        if max_threads > 0 and len(pending_threads) >= max_threads:
+                            LOG.debug("max thread window (%d) reached, joining on pending threads" % \
+                                      (max_threads))
+                            for pending_thread in pending_threads:
+                                pending_thread.join()
+                                LOG.debug("thread joined")
+
+                            del pending_threads[:]
+                            
+                            
                     else:
                         cmd.execute()
 
@@ -238,8 +263,10 @@ class ProgramRunner(object):
             LOG.error(traceback.format_exc())
 
         # wait for threads to join
+        LOG.debug("joining on pending threads (%d)" % len(pending_threads))
         for pending_thread in pending_threads:
             pending_thread.join()
+            LOG.debug("thread joined")
 
         # Clean up the results of a program/test run
         while (len(self.completed_commands)>0):
