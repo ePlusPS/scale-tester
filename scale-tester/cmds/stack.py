@@ -620,7 +620,7 @@ class UpdateStacksCmd(cmd.Command):
         if ("tenant_white_list" in self.context):
             LOG.debug("tenant white list enabled")
             # parse the white-list
-            tenant_white_list = _parse_tenant_whitelist(self.context["tenant_white_list"])
+            tenant_white_list = self._parse_tenant_whitelist(self.context["tenant_white_list"])
 
         for tenant_name in sorted(tenants_stacks_dict):
             if (tenant_white_list is None or tenant_name in tenant_white_list):
