@@ -6,6 +6,7 @@ import novaclient.v1_1.client as nova_client
 import novaclient.v1_1.servers as nova_servers
 import pprint
 import pudb
+import time
 
 LOG = logging.getLogger("scale_tester")
 
@@ -122,12 +123,11 @@ class CreateVMCmd(cmd.Command):
         LOG.debug("execute")
         # obtain keystone client
         openstack_conf = self.program.context["openstack_conf"]
-        pu.db
         keystone_c = keystone_client.Client(auth_url=openstack_conf['openstack_auth_url'],
                                    username=self.tenant_user,
                                    password=self.tenant_password,
                                    tenant_name=self.tenant_name)
-
+	#pu.db
         nova_c = \
             nova_client.Client(auth_url=openstack_conf['openstack_auth_url'],
                                username = self.tenant_user,
@@ -148,8 +148,16 @@ class CreateVMCmd(cmd.Command):
                                                flavor=server_flavor,
                                                nics=nics)
         
-        floating_ip = nova_c.floating_ips.create(pool=self.ext_net_name)
-        created_server.add_floating_ip(floating_ip)
+        time.sleep(3.0)
+        num_tries = 0
+        while(num_tries < 5):
+            try:
+                floating_ip = nova_c.floating_ips.create(pool=self.ext_net_name)
+                created_server.add_floating_ip(floating_ip)
+                break
+            except:
+                time.sleep(3.0)
+                num_tries += 1
 
         return cmd.SUCCESS 
     
