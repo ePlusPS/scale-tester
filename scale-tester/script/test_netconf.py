@@ -94,7 +94,6 @@ def do_show_cpu_process_history(conn):
 
         logger.debug("do cd response %s" % rpc_obj.xml)
 
-        pu.db
         # filter_str = GET_SHOW_CLOCK
         filter_str = GET_PROCESS_CPU_HISTORY
         rpc_obj = conn.get(filter=filter_str)
