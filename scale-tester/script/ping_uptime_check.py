@@ -83,8 +83,16 @@ def parse_results():
                 continue
 
             match_obj = re.match(PING_SUCCESS_REGEX, line)
-            line_ip = match_obj.group(1)
-            if match_obj is None or line_ip != dst_ip:
+            if match_obj is None:
+                line_valid = False
+            else:
+                line_ip = match_obj.group(1)
+                if line_ip != dst_ip:
+                    line_valid = False
+                else:
+                    line_valid = True
+
+            if line_valid == False:
                 if not first_success_seen:
                     continue
 
