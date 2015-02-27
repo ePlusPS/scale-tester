@@ -88,8 +88,8 @@ class GetAllASRHealthStatusCmd(cmd.Command):
     
     def execute(self):
         LOG.debug("execute")
-
-        routers_dict = self.context['routers']
+        
+        routers_dict = self.program.context['global_test_parameters']['routers']
 
         program_runner = self.program.context['program_runner']
 
@@ -204,7 +204,7 @@ if __name__ == "__main__":
                                      asr_host="10.1.10.252",
                                      asr_host_port=22,
                                      asr_user="admin",
-                                     asr_password="!cisco123",
+                                     asr_password="admin",
                                      asr_slots=["0"])
 
     asr_health_cmd.init()

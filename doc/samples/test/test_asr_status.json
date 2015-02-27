@@ -10,13 +10,7 @@
                 "openstack_heat_stack_owner_role":"heat_stack_owner"
             },
             "global_test_parameters" : {
-            }
-        },
-        "commands" : [
-            {
-                "command_name" : "cmds.asr.GetAllASRHealthStatusCmd",
-                "context" : {
-                    "routers":[
+                "routers":[
                         {
                             "asr_name":"OC-ASR-A",
                             "asr_host":"10.1.10.252",
@@ -35,8 +29,13 @@
 
                         }
                     
-                    ]
-                }
+                ]
+            }
+        },
+        "commands" : [
+            {
+                "command_name" : "cmds.asr.GetAllASRHealthStatusCmd",
+                "context" : {}
             }
         ]
     }
