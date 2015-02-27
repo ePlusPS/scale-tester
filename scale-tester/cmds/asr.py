@@ -88,8 +88,8 @@ class GetAllASRHealthStatusCmd(cmd.Command):
     
     def execute(self):
         LOG.debug("execute")
-
-        routers_dict = self.context['routers']
+        
+        routers_dict = self.program.context['global_test_parameters']['routers']
 
         program_runner = self.program.context['program_runner']
 
