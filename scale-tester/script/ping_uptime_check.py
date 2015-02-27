@@ -43,7 +43,7 @@ def signal_handler(signal, frame):
     proc_cleanup()
     sys.exit(0)
 
-PING_CMD_STR = "ping -ODnv -W 0.9 -i 1 %s > /tmp/ping_check/%s.out"
+PING_CMD_STR = "ping -ODn -W 0.9 -i 1 %s > /tmp/ping_check/%s.out"
 PING_SUCCESS_REGEX = ".*bytes from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*"
 PING_DUP_REGEX = ".*DUP.*"
 PING_FAIL_REGEX = ".*no answer.*"
