@@ -3,17 +3,35 @@ import subprocess
 import signal
 import sys
 import re
+import neutronclient.v2_0.client as neutron_client
 
 #dst_ip_list = ["5.5.2.100",
 #                "5.5.2.99",
 #                "5.5.2.98",
 #                "5.5.2.97"]
 
-dst_ip_list = ["10.1.10.188",
-               "10.1.10.63"]
+#dst_ip_list = ["10.1.10.188",
+#               "10.1.10.63"]
+dst_ip_list = []
 
 open_process_list = []
 results_dict = {}
+
+NEUTRON_FIP_LIST_REGEX = ".*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*"
+OSTK_AUTH_URL = "http://10.1.10.63:5000/v2.0/"
+
+def get_floating_ips():
+    auth_url = OSTK_AUTH_URL
+    neutron_session = neutron_client.Client(auth_url=auth_url,
+                                            username="admin2",
+                                            password="admin2",
+                                            tenant_name="admin")
+
+    tenant_floating_ip_objs = neutron_session.list_floatingips()
+    tenant_floating_ip_objs = tenant_floating_ip_objs['floatingips']
+    for fip_dict in tenant_floating_ip_objs:
+        dst_ip_list.append(fip_dict['floating_ip_address'])
+    dst_ip_list.sort()
 
 def proc_cleanup():
     for process in open_process_list:
@@ -30,6 +48,7 @@ PING_SUCCESS_REGEX = ".*bytes from.*"
 PING_FAIL_REGEX = ".*no answer.*"
 
 def start_pings():
+    get_floating_ips()
     for dst_ip in dst_ip_list:
         cmd_str = PING_CMD_STR % (dst_ip, dst_ip)
         print("Launching cmd: %s" % cmd_str)
