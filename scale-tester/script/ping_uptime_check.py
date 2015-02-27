@@ -43,8 +43,9 @@ def signal_handler(signal, frame):
     proc_cleanup()
     sys.exit(0)
 
-PING_CMD_STR = "ping -ODv -W 0.9 -i 1 %s > /tmp/ping_check/%s.out"
-PING_SUCCESS_REGEX = ".*bytes from.*"
+PING_CMD_STR = "ping -ODnv -W 0.9 -i 1 %s > /tmp/ping_check/%s.out"
+PING_SUCCESS_REGEX = ".*bytes from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*"
+PING_DUP_REGEX = ".*DUP.*"
 PING_FAIL_REGEX = ".*no answer.*"
 
 def start_pings():
@@ -55,7 +56,7 @@ def start_pings():
         proc = subprocess.Popen(cmd_str, shell=True)
         open_process_list.append(proc)
 
-    time.sleep(1200) # sleep for 20 min
+    time.sleep(3600) # sleep for 1 hour
     proc_cleanup()
     sys.exit(0)
 
@@ -77,7 +78,13 @@ def parse_results():
                 skipped_first = True
                 continue
 
-            if re.match(PING_SUCCESS_REGEX, line) is None:
+            # ignore duplicate packets
+            if re.match(PING_DUP_REGEX, line):
+                continue
+
+            match_obj = re.match(PING_SUCCESS_REGEX, line)
+            line_ip = match_obj.group(1)
+            if match_obj is None or line_ip != dst_ip:
                 if not first_success_seen:
                     continue
 
