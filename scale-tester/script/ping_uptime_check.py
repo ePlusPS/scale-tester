@@ -44,9 +44,9 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 PING_CMD_STR = "ping -ODn -W 0.9 -i 1 %s > /tmp/ping_check/%s.out"
-PING_SUCCESS_REGEX = ".*bytes from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*"
+PING_SUCCESS_REGEX = ".*bytes from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*icmp_seq=(\d+).*"
 PING_DUP_REGEX = ".*DUP.*"
-PING_FAIL_REGEX = ".*no answer.*"
+PING_FAIL_REGEX = ".*no answer.*icmp_seq=(\d+).*"
 
 def start_pings():
     get_floating_ips()
@@ -74,9 +74,9 @@ def parse_results():
         first_success_seen = False
 
         for line in results_file:
-            if not skipped_first:
-                skipped_first = True
-                continue
+            #if not skipped_first:
+            #    skipped_first = True
+            #    continue
 
             # ignore duplicate packets
             if re.match(PING_DUP_REGEX, line):
@@ -86,23 +86,13 @@ def parse_results():
             if match_obj is None:
                 line_valid = False
             else:
-                line_ip = match_obj.group(1)
+                line_ip, seq_no = match_obj.group(1,2)
                 if line_ip != dst_ip:
                     line_valid = False
                 else:
                     line_valid = True
 
-            if line_valid == False:
-                if not first_success_seen:
-                    continue
-
-                if in_gap == False:
-                    gap_start_seq = cur_seq
-                    gap_start_line = line
-                    in_gap = True
-                else:
-                    pass
-            else:
+            if line_valid:
                 first_success_seen = True
                 if in_gap == False:
                     pass
@@ -112,8 +102,24 @@ def parse_results():
                     if gap_size > max_gap_size:
                         max_gap_size = gap_size
                         max_gap_start_line = gap_start_line
-            
-            cur_seq += 1
+
+                cur_seq += 1
+            else:
+                match_obj = re.match(PING_FAIL_REGEX, line)
+                if match_obj:
+                    seq_no = match_obj.group(1)
+
+                    if not first_success_seen:
+                        continue
+
+                    if in_gap == False:
+                        gap_start_seq = cur_seq
+                        gap_start_line = line
+                        in_gap = True
+                    else:
+                        pass
+                    
+                    cur_seq += 1
 
         results_dict[dst_ip] = {"max_gap_size": max_gap_size,
                                 "max_gap_start_line": max_gap_start_line,
