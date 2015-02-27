@@ -1,0 +1,55 @@
+description: HOT template file for 3 networks each having 0 vms
+heat_template_version: '2013-05-23'
+outputs: {}
+parameters:
+  image_id: {description: Image Name, type: string}
+  public_net: {description: public network name, type: string}
+  public_net_id: {description: public network id, type: string}
+resources:
+  net_0:
+    properties: {name: net_0}
+    type: OS::Neutron::Net
+  net_1:
+    properties: {name: net_1}
+    type: OS::Neutron::Net
+  net_2:
+    properties: {name: net_2}
+    type: OS::Neutron::Net
+  router1:
+    properties:
+      external_gateway_info:
+        network: {get_param: public_net}
+    type: OS::Neutron::Router
+  router1_interface_0:
+    properties:
+      router_id: {get_resource: router1}
+      subnet_id: {get_resource: subnet_0}
+    type: OS::Neutron::RouterInterface
+  router1_interface_1:
+    properties:
+      router_id: {get_resource: router1}
+      subnet_id: {get_resource: subnet_1}
+    type: OS::Neutron::RouterInterface
+  router1_interface_2:
+    properties:
+      router_id: {get_resource: router1}
+      subnet_id: {get_resource: subnet_2}
+    type: OS::Neutron::RouterInterface
+  subnet_0:
+    properties:
+      cidr: 13.13.13.0/24
+      gateway_ip: 13.13.13.1
+      network_id: {get_resource: net_0}
+    type: OS::Neutron::Subnet
+  subnet_1:
+    properties:
+      cidr: 14.14.14.0/24
+      gateway_ip: 14.14.14.1
+      network_id: {get_resource: net_1}
+    type: OS::Neutron::Subnet
+  subnet_2:
+    properties:
+      cidr: 15.15.15.0/24
+      gateway_ip: 15.15.15.1
+      network_id: {get_resource: net_2}
+    type: OS::Neutron::Subnet

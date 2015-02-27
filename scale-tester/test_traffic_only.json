@@ -22,30 +22,19 @@
         },
         "commands" : [
             {
-                "command_name" : "cmds.tenants.CreateTenantsCmd",
-                "context" : {}
-            },
-            {
-                "command_name" : "cmds.stack.UndoStackWaitCmd",
-                "context" : {}
-            },
-            {
-                "command_name" : "cmds.stack.CreateStacksCmd",
-                "context" : {
-                    "vm_image_id" : "52bf1790-7e0d-412e-8e3b-a651fc676425",
-                    "external_network" : "publicnet1",
-                    "external_network_id" : "bbfaffde-e6fd-400b-b28b-97908f5e5617",
-                    "heat_hot_file":"../doc/samples/heat/fip3.yaml"
-                }
-            },
-            {
-                "command_name" : "cmds.barrier.StackCreateBarrierCmd",
+                "command_name" : "cmds.stack.GetStacksCmd",
                 "context" : {}
             },
             {
                 "command_name" : "cmds.traffic.TrafficLauncherCmd",
                 "context" : {
-                    "sub_cmd" : "cmds.traffic.CrossTenantPingTestCmd"
+                    "sub_cmd" : "cmds.traffic.SingleDestPingTestCmd"
+                }
+            },
+	    {
+                "command_name" : "cmds.traffic.TrafficResultsCmd",
+                "context" : {
+                    "sub_cmd" : "cmds.traffic.SingleDestPingTestCmd"
                 }
             }
         ]

@@ -202,8 +202,10 @@ class ProgramRunner(object):
         # -1 == unlimited
         max_threads = -1
 
-        if "max_threads" in self.program.context:
-            max_threads = self.program.context['max_threads']
+        if "max_threads" in self.program.context['global_test_parameters']:
+            max_threads = self.program.context['global_test_parameters']['max_threads']
+        
+        LOG.debug("max threads = %d" % (max_threads))
 
         try:
             while(True):
@@ -239,7 +241,7 @@ class ProgramRunner(object):
                                 pending_thread.join()
                                 LOG.debug("thread joined")
 
-                            del pending_threads[:]
+                            pending_threads = []
                             
                             
                     else:

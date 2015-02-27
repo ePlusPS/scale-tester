@@ -111,6 +111,7 @@ def _get_stack(heat_session, stack_name, filter_attribute="name"):
         LOG.debug("   stack_id: %s" % stack_item.id)
         return stack_item
 
+
 class GetStacksCmd(cmd.Command):
     """
     Get list of existing stacks instead of creating new ones
@@ -176,6 +177,37 @@ class GetStacksCmd(cmd.Command):
                 tenant.target_user = target_user
                 tenants_stacks_dict[tenant.name] = tenant
                 
+        
+        return cmd.SUCCESS
+
+    def undo(self):
+        return cmd.SUCCESS
+
+class FakeTenantStack(object):
+    pass
+
+class FakeAdminGetStacksCmd(GetStacksCmd):
+    def execute(self):        
+        #openstack_conf = self.program.context["openstack_conf"]
+        #auth_url = openstack_conf["openstack_auth_url"]
+        #heat_url = openstack_conf['openstack_heat_url']
+
+        resources = self.program.context['program.resources']
+        tenants_stacks_dict = resources.tenants_stacks
+
+        #admin_keystone_c = cmd.get_keystone_client(self.program)
+        #tenant_list = admin_keystone_c.tenants.list()
+
+        tenant = FakeTenantStack()
+        stack = FakeTenantStack()
+        user = FakeTenantStack()
+        user.username = "admin2"
+        user.name = user.username
+        tenant.name = "admin"
+        tenant.id = "0ef2187f3987425ea512badbc04a3283"
+        tenant.target_user = user
+        tenant.stack_list = [stack]
+        tenants_stacks_dict[tenant.name] = tenant                
         
         return cmd.SUCCESS
 

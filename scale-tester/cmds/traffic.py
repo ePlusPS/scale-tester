@@ -237,7 +237,7 @@ class IntraTenantPingTestCmd(cmd.Command):
         start_time = time.time()
         
         first_vm_up = False
-        time_to_wait = 60
+        time_to_wait = 120 
         time_to_wait_vm_up = 119
 
         while len(pending_session_list) > 0:
@@ -443,7 +443,7 @@ class IntraTenantPingTestCmd(cmd.Command):
                         port=22,
                         username="cirros",
                         password="cubswin:)",
-                        timeout=10)
+                        timeout=30)
             return ssh
         except Exception:
             return None
