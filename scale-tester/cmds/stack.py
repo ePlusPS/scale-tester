@@ -1,6 +1,7 @@
 # placeholder for heatclient related with commands
 
 import cmd
+import cmds.asr as asr
 import pprint
 import logging
 import heatclient.v1.client as heat_client
@@ -470,6 +471,19 @@ class CreateStackCmd(cmd.Command):
 
         return cmd.SUCCESS
 
+    def done(self):
+        # enqueue Get ASR status
+        if ('routers' in self.program.context['global_test_parameters']):
+            cmd_context = {}
+            asr_status_cmd = asr.GetAllASRHealthStatusCmd(cmd_context, self.program)
+            program_runner = self.program.context['program_runner']
+
+            # preempt all other commands in the execution queue and
+            # fetch ASR status
+            program_runner.execution_queue.appendleft(asr_status_cmd)
+
+        return cmd.SUCCESS
+
     def undo(self):
         """
         When invoked, will delete the stack created by this command
@@ -829,6 +843,19 @@ class UpdateStackCmd(cmd.Command):
                     self.program.failed = True
     
             return cmd.SUCCESS
+
+    def done(self):
+        # enqueue Get ASR status
+        if ('routers' in self.program.context['global_test_parameters']):
+            cmd_context = {}
+            asr_status_cmd = asr.GetAllASRHealthStatusCmd(cmd_context, self.program)
+            program_runner = self.program.context['program_runner']
+
+            # preempt all other commands in the execution queue and
+            # fetch ASR status
+            program_runner.execution_queue.appendleft(asr_status_cmd)
+
+        return cmd.SUCCESS
 
     def undo(self):
         """
