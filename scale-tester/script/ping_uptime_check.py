@@ -100,8 +100,7 @@ def parse_results():
         if max_gap_size > global_max_gap_size:
             global_max_gap_size = max_gap_size
     
-    for dst_ip in results_dict:
-        result = results_dict[dst_ip]
+    for dst_ip, result in sorted(results_dict.iteritems(), key=lambda (k,v): k):
         print("Dest IP: %s" % dst_ip)
         print("    max gap size: %s" % result['max_gap_size'])
         print("    max gap start line: %s" % result['max_gap_start_line'])
