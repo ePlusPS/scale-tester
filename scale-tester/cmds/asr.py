@@ -77,6 +77,7 @@ class GetAllASRHealthStatusCmd(cmd.Command):
         super(GetAllASRHealthStatusCmd,self).__init__()
         self.context = cmd_context
         self.program = program
+        self.tenant_stack_count = kwargs.get('tenant_stack_count',0)
 
     def init(self):
         LOG.debug("init")
@@ -98,6 +99,7 @@ class GetAllASRHealthStatusCmd(cmd.Command):
             asr_health_cmd = \
                 GetASRHealthCmd(cmd_context,
                                 self.program,
+                                tenant_stack_count=self.tenant_stack_count,
                                 asr_host=router['asr_host'],
                                 asr_host_port=router['asr_host_port'],
                                 asr_user = router['asr_user'],
@@ -132,7 +134,8 @@ class GetASRHealthCmd(cmd.Command):
         #extra kwargs
         if ('tenant_name' in kwargs):
             self.tenant_name = kwargs['tenant_name']
-    
+        
+        self.tenant_stack_count = kwargs.get('tenant_stack_count',0)
         # obtain connection information for router
         self.asr_host = kwargs['asr_host']
         self.asr_host_port = kwargs['asr_host_port']
@@ -165,7 +168,10 @@ class GetASRHealthCmd(cmd.Command):
                 LOG.info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
                 LOG.info("ASR Host %s clock = %s" % \
                           (self.asr_host,rpc_obj.data_xml))
-                
+
+                if (self.tenant_stack_count > 0):
+                    LOG.info("Current Tenant Stack Count: %d" % (self.tenant_stack_count))
+
                 filter_str = GET_PROCESS_CPU
                 rpc_obj = conn.get(filter=filter_str)
                 LOG.info("ASR Host %s cpu history = %s" % \

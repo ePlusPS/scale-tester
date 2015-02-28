@@ -233,6 +233,10 @@ class CreateStacksCmd(cmd.Command):
         else:
             return cmd.FAILURE_HALT
         
+        # global counter
+        if ("tenant_stack_count" not in self.program.context):
+            self.program.context['tenant_stack_count'] = 0
+        
         # make sure that self.program.context['program_runner'] exists
         return cmd.SUCCESS
 
@@ -458,6 +462,13 @@ class CreateStackCmd(cmd.Command):
                 LOG.info("Tenant %s stack %s completed in %d seconds" % \
                           (self.tenant_name, self.stack_name,
                           (cur_time - start_time)))
+
+                if ("tenant_count" in self.program.context):
+                    self.program.context['tenant_stack_count'] = \
+                        self.program.context['tenant_stack_count'] + 1
+
+                    LOG.info("Current create tenant stack count = %d" %
+                        (self.program.context['tenant_stack_count']))
                 break
         
         if cur_time - start_time > time_limit:
@@ -475,7 +486,12 @@ class CreateStackCmd(cmd.Command):
         # enqueue Get ASR status
         if ('routers' in self.program.context['global_test_parameters']):
             cmd_context = {}
-            asr_status_cmd = asr.GetAllASRHealthStatusCmd(cmd_context, self.program)
+            asr_status_cmd = \
+                asr.GetAllASRHealthStatusCmd(cmd_context,
+                                             self.program,
+                                             tenant_stack_count=\
+                                                self.program.context['tenant_stack_count'])
+
             program_runner = self.program.context['program_runner']
 
             # preempt all other commands in the execution queue and
