@@ -1,3 +1,8 @@
+"""
+This file contains a collection of nova compute based commands for creating
+virtual machines.
+"""
+
 import logging
 import cmd
 import program
@@ -12,7 +17,8 @@ LOG = logging.getLogger("scale_tester")
 
 class CreateVMsCmd(cmd.Command):
     """
-    Composite creator cmd for VMs
+    This command will n-number of vms in a specified
+    private network.
     """
     def __init__(self, cmd_context, program, **kwargs):
         """
@@ -127,7 +133,6 @@ class CreateVMCmd(cmd.Command):
                                    username=self.tenant_user,
                                    password=self.tenant_password,
                                    tenant_name=self.tenant_name)
-	#pu.db
         nova_c = \
             nova_client.Client(auth_url=openstack_conf['openstack_auth_url'],
                                username = self.tenant_user,
@@ -137,7 +142,6 @@ class CreateVMCmd(cmd.Command):
         
         server_image = nova_c.images.get(self.vm_image_id)
         server_flavor = nova_c.flavors.get(self.vm_flavor)
-        # private_network = nova_c.networks.get(self.private_net_id)
     
         nic_1_conf_dict = {'net-id':self.private_net_id}
 
@@ -154,6 +158,7 @@ class CreateVMCmd(cmd.Command):
             try:
                 floating_ip = nova_c.floating_ips.create(pool=self.ext_net_name)
                 created_server.add_floating_ip(floating_ip)
+                LOG.info("Created VM %s" % (self.vm_name))
                 break
             except:
                 time.sleep(3.0)

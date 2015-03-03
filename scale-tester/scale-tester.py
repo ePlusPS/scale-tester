@@ -6,7 +6,7 @@ This is the main driver for the scale-tester.
 3. For each command in the template file, instantiate the cmd object and append
 to the program
 """
-
+import time
 import argparse
 import json
 import logging
@@ -23,7 +23,8 @@ formatter = \
     logging.Formatter('%(asctime)s - %(module)s - %(funcName)s - (%(lineno)d) %(levelname)s \n %(message)s')
 
 # All inclusive log
-fh = logging.FileHandler("scale_tester.log")
+current_timestr = time.strftime("%Y%m%d-%H%M%S")
+fh = logging.FileHandler("scale_tester_%s.log" %(current_timestr))
 fh.setFormatter(formatter)
 LOG.addHandler(fh)
 LOG.setLevel(logging.DEBUG)
@@ -31,7 +32,7 @@ LOG.setLevel(logging.DEBUG)
 # just info level logging
 formatter2 = \
     logging.Formatter('%(asctime)s - %(module)s - %(funcName)s - (%(lineno)d) %(levelname)s %(message)s')
-fh2 = logging.FileHandler("info.log")
+fh2 = logging.FileHandler("info_%s.log" % (current_timestr))
 fh2.setLevel(logging.INFO)
 fh2.setFormatter(formatter2)
 LOG.addHandler(fh2)
