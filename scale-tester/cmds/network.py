@@ -154,7 +154,6 @@ class CreateTenantNetworkCmd(cmd.Command):
             created_networks is not None):
 
             LOG.debug("vm_configs = %s" % (pprint.pformat(self.vm_configs)))
-            pu.db 
             external_network = \
                 neutron_client.show_network(self.ext_net_id)
 
