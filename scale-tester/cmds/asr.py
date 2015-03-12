@@ -24,7 +24,7 @@ GET_PROCESS_CPU = """
         <text-filter-spec> | inc FFFFFFFFFFFFFFFF</text-filter-spec>
     </config-format-text-cmd>    
     <oper-data-format-text-block>
-        <exec>show process cpu</exec>
+        <exec>show process cpu sorted</exec>
     </oper-data-format-text-block>
 </filter>
 """
@@ -50,6 +50,53 @@ GET_PLATFORM_RESOURCES = """
     </oper-data-format-text-block>
 </filter>
 """
+
+GET_SHOW_IP_ROUTE_SUMMARY = """
+<filter type="subtree">
+    <config-format-text-cmd>
+        <text-filter-spec> | inc FFFFFFFFFFFFFFFF</text-filter-spec>
+    </config-format-text-cmd>    
+    <oper-data-format-text-block>
+        <exec>show ip route summary</exec>
+    </oper-data-format-text-block>
+</filter>
+"""
+
+GET_SHOW_STANDBY_INTERNAL_SUMMARY = """
+<filter type="subtree">
+    <config-format-text-cmd>
+        <text-filter-spec> | inc FFFFFFFFFFFFFFFF</text-filter-spec>
+    </config-format-text-cmd>    
+    <oper-data-format-text-block>
+        <exec>show standby internal summary</exec>
+    </oper-data-format-text-block>
+</filter>
+"""
+
+GET_SHOW_PROCESS_MEMORY_PLATFORM = """
+<filter type="subtree">
+    <config-format-text-cmd>
+        <text-filter-spec> | inc FFFFFFFFFFFFFFFF</text-filter-spec>
+    </config-format-text-cmd>    
+    <oper-data-format-text-block>
+        <exec>show process memory platform sorted location %s</exec>
+    </oper-data-format-text-block>
+</filter>
+"""
+
+GET_SHOW_IP_ACCESS_LIST_COUNT = """
+<filter type="subtree">
+    <config-format-text-cmd>
+        <text-filter-spec> | inc FFFFFFFFFFFFFFFF</text-filter-spec>
+    </config-format-text-cmd>    
+    <oper-data-format-text-block>
+        <exec>show ip access-lists | count neutron_acl</exec>
+    </oper-data-format-text-block>
+</filter>
+"""
+
+
+ 
 
 def asr_connect(host, port, user, password):
     """
@@ -169,12 +216,25 @@ class GetASRHealthCmd(cmd.Command):
                 LOG.info("ASR Host %s clock = %s" % \
                           (self.asr_host,rpc_obj.data_xml))
 
+
                 if (self.tenant_stack_count > 0):
                     LOG.info("Current Tenant Stack Count: %d" % (self.tenant_stack_count))
 
+                filter_str = GET_SHOW_STANDBY_INTERNAL_SUMMARY
+                rpc_obj = conn.get(filter=filter_str)
+
+                LOG.info("ASR Host %s standby internal summary = %s" % \
+                          (self.asr_host, rpc_obj.data_xml))
+
+                filter_str = GET_SHOW_IP_ACCESS_LIST_COUNT
+                rpc_obj = conn.get(filter=filter_str)
+
+                LOG.info("ASR Host %s ip access list count = %s" % \
+                          (self.asr_host, rpc_obj.data_xml))
+
                 filter_str = GET_PROCESS_CPU
                 rpc_obj = conn.get(filter=filter_str)
-                LOG.info("ASR Host %s cpu history = %s" % \
+                LOG.info("ASR Host %s process cpu = %s" % \
                           (self.asr_host,rpc_obj.data_xml))
                 # want to grep for the following line
                 # CPU utilization for five seconds: 2%/0%; one minute: 2%; five minutes: 2%
@@ -185,7 +245,12 @@ class GetASRHealthCmd(cmd.Command):
                         rpc_obj = conn.get(filter=filter_str)
                         LOG.info("ASR Host %s Slot %s Resource = %s" % \
                                   (self.asr_host, slot, rpc_obj.data_xml))
+                        
+                        filter_str = GET_SHOW_PROCESS_MEMORY_PLATFORM % (slot)
+                        rpc_obj = conn.get(filter=filter_str)
 
+                        LOG.info("ASR Host %s Slot %s Process Memory Platform = %s" % \
+                                  (self.asr_host, slot, rpc_obj.data_xml))
                 LOG.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
             except Exception as exc:
