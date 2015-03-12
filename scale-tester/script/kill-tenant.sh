@@ -1,5 +1,5 @@
 # A simple script for whacking a block of tenants and users
-for i in `seq 104 104`;
+for i in `seq 550 999`;
 do
     TENANT="tenant-test-$i"
     USER="tenant-test-$i-0"
