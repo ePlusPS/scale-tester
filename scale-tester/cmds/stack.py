@@ -16,7 +16,7 @@ from operator import attrgetter
 LOG = logging.getLogger("scale_tester")
 TENANT_NAME_REGEX = "tenant-test-.*"
 MAX_FAILED_STACK_UPDATES = 1
-STACK_CREATE_TIME_LIMIT=180
+STACK_CREATE_TIME_LIMIT=210
 
 class StackReqRsp:
     """
@@ -835,7 +835,9 @@ class UpdateStackCmd(cmd.Command):
                    stack_status.stack_status == "UPDATE_FAILED"):
                     LOG.info("For tenant %s, Stack failed for \
                     stack_id %s" % (self.tenant_name,self.stack_id))
-                    self.program.failed = True
+                    # self.program.failed = True
+                    LOG.info("Cooldown for 20 seconds before going onto next stack")
+                    time.sleep(20)
                     break
 
                 if self.rollback_started is True:
